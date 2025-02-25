@@ -72,9 +72,9 @@ Please format it as a professional README.md with markdown,  including appropria
       const result = await model.generateContent(prompt);
       const response = await result.response;
       const text = response.text();
+
       
-      // Remove markdown code block indicators if present
-      const cleanedText = text.replace(/^markdown\n/, '').replace(/^\n/, '').replace(/\n```$/, '');
+      const cleanedText = text.replace(/^```markdown\n/, '').replace(/^```\n/, '').replace(/\n```$/, '');
       
       setGeneratedProfile(cleanedText);
     } catch (err) {
