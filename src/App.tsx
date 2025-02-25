@@ -12,6 +12,7 @@ import NotesWriter from './pages/NotesWriter';
 import Profile from './pages/Profile';
 import LoginModal from './components/ui/LoginModal';
 import { Toaster } from './components/ui/toaster';
+import ProtectedRoute from './components/ProtectedRoute';
 
 function App() {
   return (
@@ -34,12 +35,54 @@ function AppContent() {
       <Layout>
         <Routes>
           <Route path="/" element={<Dashboard />} />
-          <Route path="/doc-maker" element={<DocMaker />} />
-          <Route path="/linkedin-analyzer" element={<LinkedInAnalyzer />} />
-          <Route path="/linkedin-summary" element={<LinkedInSummary />} />
-          <Route path="/github-profile" element={<GitHubProfile />} />
-          <Route path="/notes-writer" element={<NotesWriter />} />
-          <Route path="/profile" element={<Profile />} />
+          <Route
+            path="/doc-maker"
+            element={
+              <ProtectedRoute>
+                <DocMaker />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/linkedin-analyzer"
+            element={
+              <ProtectedRoute>
+                <LinkedInAnalyzer />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/linkedin-summary"
+            element={
+              <ProtectedRoute>
+                <LinkedInSummary />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/github-profile"
+            element={
+              <ProtectedRoute>
+                <GitHubProfile />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/notes-writer"
+            element={
+              <ProtectedRoute>
+                <NotesWriter />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/profile"
+            element={
+              <ProtectedRoute>
+                <Profile />
+              </ProtectedRoute>
+            }
+          />
         </Routes>
       </Layout>
       <LoginModal
