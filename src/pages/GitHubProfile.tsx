@@ -66,7 +66,7 @@ Please format it beautifully with markdown, including appropriate emojis, badges
 
     try {
       const genAI = new GoogleGenerativeAI(geminiKey);
-      const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+      const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
       const prompt = generatePrompt(formData);
       
       const result = await model.generateContent(prompt);
