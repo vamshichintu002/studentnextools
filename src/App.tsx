@@ -1,5 +1,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { AuthProvider, useAuth } from './lib/AuthContext';
+import { ApiKeyProvider } from './lib/ApiKeyContext';
 import Layout from './components/Layout/Layout';
 import Dashboard from './pages/Dashboard';
 import DocMaker from './pages/DocMaker';
@@ -7,10 +9,25 @@ import LinkedInAnalyzer from './pages/LinkedInAnalyzer';
 import LinkedInSummary from './pages/LinkedInSummary';
 import GitHubProfile from './pages/GitHubProfile';
 import NotesWriter from './pages/NotesWriter';
+import LoginModal from './components/ui/LoginModal';
 
 function App() {
   return (
-    <Router>
+    <AuthProvider>
+      <ApiKeyProvider>
+        <Router>
+          <AppContent />
+        </Router>
+      </ApiKeyProvider>
+    </AuthProvider>
+  );
+}
+
+function AppContent() {
+  const { isLoginModalOpen, setIsLoginModalOpen, pendingPath, setPendingPath } = useAuth();
+  
+  return (
+    <>
       <Layout>
         <Routes>
           <Route path="/" element={<Dashboard />} />
@@ -21,7 +38,19 @@ function App() {
           <Route path="/notes-writer" element={<NotesWriter />} />
         </Routes>
       </Layout>
-    </Router>
+      <LoginModal
+        isOpen={isLoginModalOpen}
+        onClose={() => {
+          setIsLoginModalOpen(false);
+          setPendingPath(null);
+        }}
+        onSuccess={() => {
+          if (pendingPath) {
+            window.location.href = pendingPath;
+          }
+        }}
+      />
+    </>
   );
 }
 
