@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Menu, Home, FileText, Linkedin, Github, BookOpen, X, User, Video, ChevronDown, ChevronUp, Bot } from 'lucide-react';
+import { Menu, Home, FileText, Linkedin, Github, BookOpen, X, User, Video, ChevronDown, ChevronUp, Bot, Lightbulb } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../lib/AuthContext';
 import ProfileMenu from '../ui/ProfileMenu';
@@ -102,26 +102,38 @@ const Sidebar = ({ onClose }: SidebarProps) => {
                   <ChevronDown className="w-4 h-4" />
                 )}
               </button>
-              
               {aiToolsOpen && (
-                <ul className="ml-7 mt-1 space-y-1">
+                <ul className="mt-1 ml-4 space-y-1">
                   {aiTools.map((tool) => (
                     <li key={tool.path}>
                       <button
                         onClick={() => handleNavClick(tool.path)}
-                        className={`w-full flex items-center gap-3 px-4 py-2 rounded-lg transition-colors ${
+                        className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
                           location.pathname === tool.path
                             ? 'bg-blue-50 text-blue-600'
                             : 'hover:bg-gray-50'
                         }`}
                       >
-                        <tool.icon className="w-4 h-4" />
-                        <span className="text-sm">{tool.name}</span>
+                        <tool.icon className="w-5 h-5" />
+                        <span>{tool.name}</span>
                       </button>
                     </li>
                   ))}
                 </ul>
               )}
+            </li>
+
+            {/* Suggest AI Tool - External Link */}
+            <li>
+              <a
+                href="https://docs.google.com/forms/d/e/1FAIpQLSfAcyk_zLEvKXsFor5X_zRJtsbXNpB46M4A_lpba_4p5fMmHA/viewform"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors hover:bg-gray-50"
+              >
+                <Lightbulb className="w-5 h-5" />
+                <span>Suggest AI Tool</span>
+              </a>
             </li>
             
             {user && (
