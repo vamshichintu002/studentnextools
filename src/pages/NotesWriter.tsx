@@ -43,19 +43,37 @@ export default function NotesWriter() {
 Use markdown formatting for better readability and structure.
 
 Please provide detailed, well-structured content that includes:
-1. Clear explanation of key concepts
-2. Examples and illustrations where applicable
-3. Important points to remember
-4. Common misconceptions or challenges
-5. Practice questions or exercises (if relevant)
+1. A brief overview of the topic
+2. Key concepts and principles
+3. Examples and illustrations where applicable
+4. Important points to remember
+5. Common misconceptions or challenges
+6. Practice questions or exercises (if relevant)
 
 Format the content using markdown with:
-1. Clear headings using ### for sub-topics (not ## as I will use that for the main topic)
+1. Clear headings using ### for sub-topics
 2. Bullet points and numbered lists where appropriate
 3. **Bold** and *italic* text for emphasis
 4. Code blocks with proper syntax highlighting (if needed)
 5. Tables where relevant
 6. > Blockquotes for important notes or definitions
+
+Structure your response with these sections:
+### Overview
+[Brief overview of the topic]
+
+### Key Concepts
+[Explanation of main concepts]
+
+### Examples
+[Practical examples]
+
+### Important Points
+[Key takeaways]
+
+If applicable, also include:
+### Common Misconceptions
+### Practice Questions
 
 DO NOT include a heading for the topic itself, as I will add it separately.
 Start directly with the content.`;
@@ -91,6 +109,7 @@ Start directly with the content.`;
     // Split topics and clean them
     const topics = formData.topics.split(',').map(topic => topic.trim()).filter(Boolean);
     let allContent = [`# ${formData.unitTitle}\n`]; // Start with the title
+    const newTopicContents: TopicContent[] = [];
     
     try {
       const genAI = new GoogleGenerativeAI(geminiKey);
@@ -106,15 +125,18 @@ Start directly with the content.`;
         const content = response.text();
         
         // Add topic heading and content to our array
-        allContent.push(`\n\n## ${topic}\n\n### Overview\n\n${content}`);
+        allContent.push(`\n\n## ${topic}\n\n${content}`);
+        
+        // Store the topic content for the preview
+        newTopicContents.push({ topic, content });
         
         // Update states
-        setTopicContents(prev => [...prev, { topic, content }]);
         setCompletedSections(prev => [...prev, topic]);
-        
-        // Update the generated content in real-time
-        setGeneratedContent(allContent.join(''));
       }
+      
+      // Update the generated content and topic contents
+      setGeneratedContent(allContent.join(''));
+      setTopicContents(newTopicContents);
       
       toast({
         title: "Success",
@@ -159,7 +181,12 @@ Start directly with the content.`;
 
   const handleDownloadWord = async () => {
     try {
-      const blob = await generateWordDocument(generatedContent);
+      const blob = await generateWordDocument({
+        title: formData.unitTitle,
+        description: `Study Notes - ${formData.topics}`,
+        content: generatedContent,
+        sections: topicContents.map(tc => ({ title: tc.topic, content: tc.content }))
+      });
       saveAs(blob, `${formData.unitTitle.replace(/\s+/g, '_')}_notes.docx`);
       
       toast({
@@ -276,12 +303,102 @@ Start directly with the content.`;
               </div>
 
               {/* Preview */}
-              <div className="bg-white rounded-lg shadow-lg p-6 overflow-auto max-h-[600px]">
-                <div className="prose prose-sm max-w-none">
-                  <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                    {generatedContent}
-                  </ReactMarkdown>
+              <div className="overflow-auto max-h-[600px] pr-6 py-4">
+                {/* Unit Title */}
+                <div className="relative mb-12">
+                  {/* Background pages effect */}
+                  <div className="absolute -bottom-2 -right-2 w-full h-full bg-gray-100 rounded-lg transform rotate-1" />
+                  <div className="absolute -bottom-1 -right-1 w-full h-full bg-gray-50 rounded-lg transform rotate-0.5" />
+                  
+                  {/* Main content page */}
+                  <div 
+                    className="relative bg-white rounded-lg p-8"
+                    style={{
+                      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)'
+                    }}
+                  >
+                    <div className="prose prose-sm max-w-none">
+                      <div className="text-center mb-8 pb-4 border-b">
+                        <h1 className="text-3xl font-bold">{formData.unitTitle}</h1>
+                        <p className="text-gray-600 mt-2">Study Notes</p>
+                      </div>
+                      <p className="text-gray-600 text-center">
+                        These notes cover the following topics: {formData.topics}
+                      </p>
+                    </div>
+                    
+                    {/* Page number */}
+                    <div className="absolute bottom-4 right-4 text-sm text-gray-400">
+                      Cover Page
+                    </div>
+                  </div>
                 </div>
+
+                {/* Topic Sections */}
+                {topicContents.map((topicContent, index) => (
+                  <div 
+                    key={index} 
+                    className="relative mb-12"
+                  >
+                    {/* Background pages effect */}
+                    <div className="absolute -bottom-2 -right-2 w-full h-full bg-gray-100 rounded-lg transform rotate-1" />
+                    <div className="absolute -bottom-1 -right-1 w-full h-full bg-gray-50 rounded-lg transform rotate-0.5" />
+                    
+                    {/* Main content page */}
+                    <div 
+                      className="relative bg-white rounded-lg p-8"
+                      style={{
+                        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)'
+                      }}
+                    >
+                      <div className="prose prose-sm max-w-none">
+                        <ReactMarkdown 
+                          remarkPlugins={[remarkGfm]}
+                          components={{
+                            h1: ({ node, ...props }) => (
+                              <div className="text-center mb-8 pb-4 border-b">
+                                <h1 className="text-3xl font-bold" {...props} />
+                              </div>
+                            ),
+                            h2: ({ node, ...props }) => <h2 className="text-2xl font-semibold mb-4 text-gray-800" {...props} />,
+                            h3: ({ node, ...props }) => <h3 className="text-xl font-semibold mb-3 text-gray-700" {...props} />,
+                            p: ({ node, ...props }) => <p className="mb-4 text-gray-600 leading-relaxed" {...props} />,
+                            ul: ({ node, ...props }) => <ul className="list-disc pl-6 mb-4 text-gray-600" {...props} />,
+                            ol: ({ node, ...props }) => <ol className="list-decimal pl-6 mb-4 text-gray-600" {...props} />,
+                            blockquote: ({ node, ...props }) => (
+                              <blockquote className="border-l-4 border-blue-500 pl-4 italic my-4 text-gray-600" {...props} />
+                            ),
+                            code: ({ node, inline, ...props }) => (
+                              inline ? 
+                                <code className="bg-gray-100 rounded px-1 text-sm font-mono" {...props} /> :
+                                <pre className="bg-gray-100 rounded-lg p-4 overflow-auto my-4">
+                                  <code className="text-sm font-mono" {...props} />
+                                </pre>
+                            ),
+                            table: ({ node, ...props }) => (
+                              <div className="overflow-x-auto my-4 rounded-lg border border-gray-200">
+                                <table className="min-w-full divide-y divide-gray-200" {...props} />
+                              </div>
+                            ),
+                            th: ({ node, ...props }) => (
+                              <th className="px-4 py-3 bg-gray-50 text-left text-sm font-medium text-gray-600" {...props} />
+                            ),
+                            td: ({ node, ...props }) => (
+                              <td className="px-4 py-3 text-sm text-gray-500 border-t border-gray-200" {...props} />
+                            ),
+                          }}
+                        >
+                          {`## ${topicContent.topic}\n\n${topicContent.content}`}
+                        </ReactMarkdown>
+                      </div>
+
+                      {/* Page number */}
+                      <div className="absolute bottom-4 right-4 text-sm text-gray-400">
+                        Page {index + 1}
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
             </>
           )}

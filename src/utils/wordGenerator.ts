@@ -1,5 +1,4 @@
 import { Document, Paragraph, TextRun, HeadingLevel, AlignmentType, Packer } from 'docx';
-import { saveAs } from 'file-saver';
 import * as marked from 'marked';
 
 interface DocumentData {
@@ -167,8 +166,6 @@ export const generateWordDocument = async (data: DocumentData) => {
     ]
   });
 
-  // Generate and save the document
-  const blob = await Packer.toBlob(doc);
-  const fileName = `${data.title.toLowerCase().replace(/\s+/g, '-')}-documentation.docx`;
-  saveAs(blob, fileName);
+  // Generate and return the document blob
+  return await Packer.toBlob(doc);
 };
