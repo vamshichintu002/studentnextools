@@ -9,12 +9,16 @@ import SimpleLoadingModal from '../components/ui/SimpleLoadingModal';
 import MarkdownModal from '../components/ui/MarkdownModal';
 import ApiKeyModal from '../components/ui/ApiKeyModal';
 import { useToast } from '../components/ui/use-toast';
+import { useSessionStorage } from '../lib/useSessionStorage';
 
 const GitHubProfile = () => {
   const { user } = useAuth();
   const { geminiKey } = useApiKey();
   const { toast } = useToast();
-  const [formData, setFormData] = useState({
+  const [showApiKeyModal, setShowApiKeyModal] = useState(false);
+  
+  // Use sessionStorage for form data
+  const [formData, setFormData] = useSessionStorage('github-profile-form', {
     title: '',
     subtitle: '',
     programmingSkills: '',
@@ -27,12 +31,13 @@ const GitHubProfile = () => {
     githubLink: '',
     leetcodeLink: ''
   });
-  const [generatedProfile, setGeneratedProfile] = useState('');
+  
+  // Use sessionStorage for generated content
+  const [generatedProfile, setGeneratedProfile] = useSessionStorage<string>('github-profile-generated', '');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [showLoadingModal, setShowLoadingModal] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
-  const [showApiKeyModal, setShowApiKeyModal] = useState(false);
 
   const generatePrompt = (data: typeof formData) => {
     return `Create a professional GitHub profile README.md with the following information:

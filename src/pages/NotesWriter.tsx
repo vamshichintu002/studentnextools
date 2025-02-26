@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { useApiKey } from '../lib/ApiKeyContext';
 import { useToast } from '../components/ui/use-toast';
+import { useSessionStorage } from '../lib/useSessionStorage';
 import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
 import TextArea from '../components/ui/TextArea';
@@ -17,6 +18,7 @@ import ApiKeyModal from '../components/ui/ApiKeyModal';
 interface FormData {
   unitTitle: string;
   topics: string;
+  additionalContext: string;
 }
 
 interface TopicContent {
@@ -27,19 +29,25 @@ interface TopicContent {
 export default function NotesWriter() {
   const { geminiKey } = useApiKey();
   const { toast } = useToast();
-  const [formData, setFormData] = useState<FormData>({
+  const [showApiKeyModal, setShowApiKeyModal] = useState(false);
+  
+  // Use sessionStorage for form data
+  const [formData, setFormData] = useSessionStorage('notes-writer-form', {
     unitTitle: '',
-    topics: ''
+    topics: '',
+    additionalContext: ''
   });
+  
+  // Use sessionStorage for generated content
+  const [generatedNotes, setGeneratedNotes] = useSessionStorage<string>('notes-writer-generated', '');
+  const [topicContents, setTopicContents] = useSessionStorage<Array<{ topic: string; content: string }>>('notes-writer-topics', []);
+  
   const [isLoading, setIsLoading] = useState(false);
-  const [generatedContent, setGeneratedContent] = useState('');
   const [copied, setCopied] = useState(false);
   const [showLoadingModal, setShowLoadingModal] = useState(false);
   const [currentSection, setCurrentSection] = useState<string | null>(null);
   const [completedSections, setCompletedSections] = useState<string[]>([]);
-  const [topicContents, setTopicContents] = useState<TopicContent[]>([]);
-  const [showApiKeyModal, setShowApiKeyModal] = useState(false);
-
+  
   const generateTopicPrompt = (topic: string, context: { unitTitle: string }) => {
     return `Generate comprehensive study notes for the topic "${topic}" within the unit "${context.unitTitle}".
 Use markdown formatting for better readability and structure.
@@ -102,7 +110,7 @@ Start directly with the content.`;
     setCopied(false);
     setTopicContents([]);
     setCompletedSections([]);
-    setGeneratedContent(''); // Clear existing content
+    setGeneratedNotes(''); // Clear existing content
     
     // Split topics and clean them
     const topics = formData.topics.split(',').map(topic => topic.trim()).filter(Boolean);
@@ -151,7 +159,7 @@ Start directly with the content.`;
       }
       
       // Update the generated content and topic contents
-      setGeneratedContent(allContent.join(''));
+      setGeneratedNotes(allContent.join(''));
       setTopicContents(newTopicContents);
       
       toast({
@@ -177,7 +185,7 @@ Start directly with the content.`;
       const pdfBlob = await generatePDF({
         title: formData.unitTitle,
         description: `Study Notes - ${formData.topics}`,
-        content: generatedContent
+        content: generatedNotes
       });
       saveAs(pdfBlob, `${formData.unitTitle.replace(/\s+/g, '_')}_notes.pdf`);
       
@@ -200,7 +208,7 @@ Start directly with the content.`;
       const blob = await generateWordDocument({
         title: formData.unitTitle,
         description: `Study Notes - ${formData.topics}`,
-        content: generatedContent,
+        content: generatedNotes,
         sections: topicContents.map(tc => ({ title: tc.topic, content: tc.content }))
       });
       saveAs(blob, `${formData.unitTitle.replace(/\s+/g, '_')}_notes.docx`);
@@ -275,13 +283,13 @@ Start directly with the content.`;
       </div>
 
       {/* Preview and Actions */}
-      {generatedContent && !isLoading && (
+      {generatedNotes && !isLoading && (
         <div className="space-y-4">
           {/* Action Buttons */}
           <div className="flex gap-4 mb-4">
             <Button
               onClick={() => {
-                navigator.clipboard.writeText(generatedContent);
+                navigator.clipboard.writeText(generatedNotes);
                 setCopied(true);
                 setTimeout(() => setCopied(false), 2000);
                 toast({

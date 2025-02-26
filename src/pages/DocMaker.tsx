@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { useApiKey } from '../lib/ApiKeyContext';
+import { useSessionStorage } from '../lib/useSessionStorage';
 import Input from '../components/ui/Input';
 import TextArea from '../components/ui/TextArea';
 import Button from '../components/ui/Button';
@@ -35,13 +36,17 @@ const DocMaker = () => {
   const { geminiKey } = useApiKey();
   const { toast } = useToast();
   const [showApiKeyModal, setShowApiKeyModal] = useState(false);
-  const [formData, setFormData] = useState<FormData>({
+  
+  // Use sessionStorage for form data
+  const [formData, setFormData] = useSessionStorage<FormData>('docmaker-form', {
     title: '',
     description: '',
     sections: ''
   });
+  
+  // Use sessionStorage for generated content
+  const [generatedSections, setGeneratedSections] = useSessionStorage<GeneratedSection[]>('docmaker-generated', []);
   const [isLoading, setIsLoading] = useState(false);
-  const [generatedSections, setGeneratedSections] = useState<GeneratedSection[]>([]);
   const [currentSection, setCurrentSection] = useState<string | null>(null);
   const [completedSections, setCompletedSections] = useState<string[]>([]);
   const [showLoadingModal, setShowLoadingModal] = useState(false);

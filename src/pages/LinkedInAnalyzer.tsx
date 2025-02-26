@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import Button from '../components/ui/Button';
 import { useApiKey } from '../lib/ApiKeyContext';
+import { useSessionStorage } from '../lib/useSessionStorage';
+import { useToast } from '../components/ui/use-toast';
 import { Loader2, FileText, Download, Copy, Check } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -10,7 +12,6 @@ import { generatePDF } from '../utils/pdfGenerator';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import SimpleLoadingModal from '../components/ui/SimpleLoadingModal';
 import ApiKeyModal from '../components/ui/ApiKeyModal';
-import { useToast } from '../components/ui/use-toast';
 
 // Configure PDF.js worker to use the local worker file in the public directory
 pdfjs.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.js';
@@ -24,9 +25,18 @@ const LinkedInAnalyzer = () => {
   const { geminiKey } = useApiKey();
   const { toast } = useToast();
   const [showApiKeyModal, setShowApiKeyModal] = useState(false);
+  
+  // Use sessionStorage for file data
+  const [fileContent, setFileContent] = useSessionStorage<string>('linkedin-analyzer-content', '');
   const [file, setFile] = useState<File | null>(null);
+  
+  // Use sessionStorage for analysis results
+  const [analysisResult, setAnalysisResult] = useSessionStorage<{
+    content: string;
+    score: number;
+  } | null>('linkedin-analyzer-result', null);
+  
   const [isLoading, setIsLoading] = useState(false);
-  const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
   const [isCopied, setIsCopied] = useState(false);
   const [parsingProgress, setParsingProgress] = useState<string>('');
   const [showLoadingModal, setShowLoadingModal] = useState(false);

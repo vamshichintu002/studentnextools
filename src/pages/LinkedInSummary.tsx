@@ -9,13 +9,19 @@ import SimpleLoadingModal from '../components/ui/SimpleLoadingModal';
 import SummaryModal from '../components/ui/SummaryModal';
 import ApiKeyModal from '../components/ui/ApiKeyModal';
 import { useToast } from '../components/ui/use-toast';
+import { useSessionStorage } from '../lib/useSessionStorage';
 
 const LinkedInSummary = () => {
   const { user } = useAuth();
   const { geminiKey } = useApiKey();
   const { toast } = useToast();
 
-  const [formData, setFormData] = useState({
+  const [showLoadingModal, setShowLoadingModal] = useState(false);
+  const [showSummaryModal, setShowSummaryModal] = useState(false);
+  const [showApiKeyModal, setShowApiKeyModal] = useState(false);
+
+  // Use sessionStorage for form data
+  const [formData, setFormData] = useSessionStorage('linkedin-summary-form', {
     name: '',
     jobTitle: '',
     industry: '',
@@ -24,12 +30,11 @@ const LinkedInSummary = () => {
     careerGoals: '',
     achievements: ''
   });
-  const [generatedSummary, setGeneratedSummary] = useState('');
+
+  // Use sessionStorage for generated content
+  const [generatedSummary, setGeneratedSummary] = useSessionStorage<string>('linkedin-summary-generated', '');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
-  const [showLoadingModal, setShowLoadingModal] = useState(false);
-  const [showSummaryModal, setShowSummaryModal] = useState(false);
-  const [showApiKeyModal, setShowApiKeyModal] = useState(false);
 
   const generatePrompt = (data: typeof formData) => {
     return `Write a LinkedIn summary with these details:
