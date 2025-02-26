@@ -1,5 +1,5 @@
-import React from 'react';
-import { Menu, Home, FileText, Linkedin, Github, BookOpen, X, User, Video } from 'lucide-react';
+import React, { useState } from 'react';
+import { Menu, Home, FileText, Linkedin, Github, BookOpen, X, User, Video, ChevronDown, ChevronUp, Bot } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../lib/AuthContext';
 import ProfileMenu from '../ui/ProfileMenu';
@@ -12,15 +12,19 @@ const Sidebar = ({ onClose }: SidebarProps) => {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, logout, setIsLoginModalOpen, setPendingPath, pendingPath } = useAuth();
+  const [aiToolsOpen, setAiToolsOpen] = useState(false);
   
   const navItems = [
     { name: 'Dashboard', icon: Home, path: '/' },
+    { name: 'Projects', icon: Video, path: '/projects' },
+  ];
+
+  const aiTools = [
     { name: 'Project DOC Maker', icon: FileText, path: '/doc-maker' },
     { name: 'LinkedIn Analyzer', icon: Linkedin, path: '/linkedin-analyzer' },
     { name: 'LinkedIn Summary', icon: Linkedin, path: '/linkedin-summary' },
     { name: 'GitHub Profile', icon: Github, path: '/github-profile' },
     { name: 'Notes Writer', icon: BookOpen, path: '/notes-writer' },
-    { name: 'Projects', icon: Video, path: '/projects' },
   ];
 
   const handleNavClick = (path: string) => {
@@ -36,6 +40,10 @@ const Sidebar = ({ onClose }: SidebarProps) => {
   const handleLogout = async () => {
     await logout();
     navigate('/');
+  };
+
+  const toggleAiTools = () => {
+    setAiToolsOpen(!aiToolsOpen);
   };
 
   return (
@@ -73,6 +81,49 @@ const Sidebar = ({ onClose }: SidebarProps) => {
                 </button>
               </li>
             ))}
+            
+            {/* AI Tools Dropdown */}
+            <li>
+              <button
+                onClick={toggleAiTools}
+                className={`w-full flex items-center justify-between gap-3 px-4 py-3 rounded-lg transition-colors ${
+                  aiTools.some(tool => location.pathname === tool.path)
+                    ? 'bg-blue-50 text-blue-600'
+                    : 'hover:bg-gray-50'
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <Bot className="w-5 h-5" />
+                  <span>AI Tools</span>
+                </div>
+                {aiToolsOpen ? (
+                  <ChevronUp className="w-4 h-4" />
+                ) : (
+                  <ChevronDown className="w-4 h-4" />
+                )}
+              </button>
+              
+              {aiToolsOpen && (
+                <ul className="ml-7 mt-1 space-y-1">
+                  {aiTools.map((tool) => (
+                    <li key={tool.path}>
+                      <button
+                        onClick={() => handleNavClick(tool.path)}
+                        className={`w-full flex items-center gap-3 px-4 py-2 rounded-lg transition-colors ${
+                          location.pathname === tool.path
+                            ? 'bg-blue-50 text-blue-600'
+                            : 'hover:bg-gray-50'
+                        }`}
+                      >
+                        <tool.icon className="w-4 h-4" />
+                        <span className="text-sm">{tool.name}</span>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </li>
+            
             {user && (
               <li>
                 <button
