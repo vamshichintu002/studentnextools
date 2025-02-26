@@ -118,18 +118,36 @@ Start directly with the content.`;
         setCurrentSection(topic);
         const prompt = generateTopicPrompt(topic, { unitTitle: formData.unitTitle });
         
-        const result = await model.generateContent(prompt);
-        const response = await result.response;
-        const content = response.text();
-        
-        // Add topic heading and content to our array
-        allContent.push(`\n\n## ${topic}\n\n${content}`);
-        
-        // Store the topic content for the preview
-        newTopicContents.push({ topic, content });
-        
-        // Update states
-        setCompletedSections(prev => [...prev, topic]);
+        try {
+          const result = await model.generateContent(prompt);
+          const response = await result.response;
+          const content = response.text();
+          
+          // Add topic heading and content to our array
+          allContent.push(`\n\n## ${topic}\n\n${content}`);
+          
+          // Store the topic content for the preview
+          newTopicContents.push({ topic, content });
+          
+          // Update states
+          setCompletedSections(prev => [...prev, topic]);
+        } catch (error) {
+          console.error('Error generating notes:', error);
+          if (error.message?.includes('API key')) {
+            toast({
+              title: "Invalid API Key",
+              description: "Please check your Gemini API key and try again.",
+              variant: "destructive"
+            });
+            setShowApiKeyModal(true);
+          } else {
+            toast({
+              title: "Generation Failed",
+              description: "Failed to generate notes. Please try again.",
+              variant: "destructive"
+            });
+          }
+        }
       }
       
       // Update the generated content and topic contents
@@ -140,11 +158,11 @@ Start directly with the content.`;
         title: "Success",
         description: "Notes have been generated successfully!"
       });
-    } catch (err) {
-      console.error('Error generating notes:', err);
+    } catch (error) {
+      console.error('Error:', error);
       toast({
         title: "Error",
-        description: "Failed to generate notes. Please try again.",
+        description: "An unexpected error occurred. Please try again.",
         variant: "destructive"
       });
     } finally {

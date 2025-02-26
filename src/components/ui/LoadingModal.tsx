@@ -3,21 +3,21 @@ import { Check, Loader2 } from 'lucide-react';
 
 interface LoadingModalProps {
   isOpen: boolean;
-  sections: string[];
+  sections?: string[];
   currentSection: string | null;
   completedSections: string[];
 }
 
 const LoadingModal: React.FC<LoadingModalProps> = ({
   isOpen,
-  sections,
+  sections = [],
   currentSection,
   completedSections,
 }) => {
   if (!isOpen) return null;
 
   // Calculate progress percentage
-  const progress = (completedSections.length / sections.length) * 100;
+  const progress = sections.length > 0 ? (completedSections.length / sections.length) * 100 : 0;
 
   // Get the last completed section
   const lastCompletedSection = completedSections[completedSections.length - 1];

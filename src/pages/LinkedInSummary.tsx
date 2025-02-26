@@ -8,10 +8,12 @@ import { useApiKey } from '../lib/ApiKeyContext';
 import SimpleLoadingModal from '../components/ui/SimpleLoadingModal';
 import SummaryModal from '../components/ui/SummaryModal';
 import ApiKeyModal from '../components/ui/ApiKeyModal';
+import { useToast } from '../components/ui/use-toast';
 
 const LinkedInSummary = () => {
   const { user } = useAuth();
   const { geminiKey } = useApiKey();
+  const { toast } = useToast();
 
   const [formData, setFormData] = useState({
     name: '',
@@ -67,15 +69,37 @@ Requirements:
       const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-lite" });
       const prompt = generatePrompt(formData);
       
-      const result = await model.generateContent(prompt);
-      const response = await result.response;
-      const text = response.text();
-      
-      setGeneratedSummary(text);
-      setShowSummaryModal(true);
-    } catch (err) {
-      setError('Failed to generate summary. Please check your API key and try again.');
-      console.error('Error generating summary:', err);
+      try {
+        const result = await model.generateContent(prompt);
+        const response = await result.response;
+        const text = response.text();
+        
+        setGeneratedSummary(text);
+        setShowSummaryModal(true);
+      } catch (error) {
+        console.error('Error generating summary:', error);
+        if (error.message?.includes('API key')) {
+          toast({
+            title: "Invalid API Key",
+            description: "Please check your Gemini API key and try again.",
+            variant: "destructive"
+          });
+          setShowApiKeyModal(true);
+        } else {
+          toast({
+            title: "Generation Failed",
+            description: "Failed to generate summary. Please try again.",
+            variant: "destructive"
+          });
+        }
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred. Please try again.",
+        variant: "destructive"
+      });
     } finally {
       setIsLoading(false);
       setShowLoadingModal(false);

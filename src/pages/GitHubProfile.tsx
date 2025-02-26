@@ -8,10 +8,12 @@ import { useApiKey } from '../lib/ApiKeyContext';
 import SimpleLoadingModal from '../components/ui/SimpleLoadingModal';
 import MarkdownModal from '../components/ui/MarkdownModal';
 import ApiKeyModal from '../components/ui/ApiKeyModal';
+import { useToast } from '../components/ui/use-toast';
 
 const GitHubProfile = () => {
   const { user } = useAuth();
   const { geminiKey } = useApiKey();
+  const { toast } = useToast();
   const [formData, setFormData] = useState({
     title: '',
     subtitle: '',
@@ -83,9 +85,22 @@ Please format it as a professional README.md with markdown,  including appropria
       
       setGeneratedProfile(cleanedText);
       setShowProfileModal(true);
-    } catch (err) {
-      setError('Failed to generate profile. Please check your API key and try again.');
-      console.error('Error generating profile:', err);
+    } catch (error) {
+      console.error('Error generating profile:', error);
+      if (error.message?.includes('API key')) {
+        toast({
+          title: "Invalid API Key",
+          description: "Please check your Gemini API key and try again.",
+          variant: "destructive"
+        });
+        setShowApiKeyModal(true);
+      } else {
+        toast({
+          title: "Generation Failed",
+          description: "Failed to generate README. Please try again.",
+          variant: "destructive"
+        });
+      }
     } finally {
       setIsLoading(false);
       setShowLoadingModal(false);

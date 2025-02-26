@@ -12,6 +12,7 @@ import remarkGfm from 'remark-gfm';
 import { generateWordDocument } from '../utils/wordGenerator';
 import { generatePDF } from '../utils/pdfGenerator';
 import { saveAs } from 'file-saver';
+import { useToast } from '../components/ui/use-toast';
 
 interface FormData {
   title: string;
@@ -32,6 +33,7 @@ const sampleData: FormData = {
 
 const DocMaker = () => {
   const { geminiKey } = useApiKey();
+  const { toast } = useToast();
   const [showApiKeyModal, setShowApiKeyModal] = useState(false);
   const [formData, setFormData] = useState<FormData>({
     title: '',
@@ -111,20 +113,40 @@ Start with a level 1 heading for the section name:
           description: formData.description
         });
 
-        const result = await model.generateContent(prompt);
-        const text = result.response.text();
-        
-        generatedContent.push({
-          title: section,
-          content: text
-        });
+        try {
+          const result = await model.generateContent(prompt);
+          const text = result.response.text();
+          
+          generatedContent.push({
+            title: section,
+            content: text
+          });
 
-        // Update completed sections with a slight delay
-        await new Promise(resolve => setTimeout(resolve, 500));
-        setCompletedSections(prev => [...prev, section]);
-        
-        // Update the UI as each section is generated
-        setGeneratedSections([...generatedContent]);
+          // Update completed sections with a slight delay
+          await new Promise(resolve => setTimeout(resolve, 500));
+          setCompletedSections(prev => [...prev, section]);
+          
+          // Update the UI as each section is generated
+          setGeneratedSections([...generatedContent]);
+        } catch (error) {
+          console.error('Error generating section:', error);
+          setShowLoadingModal(false);
+          if (error.message?.includes('API key')) {
+            toast({
+              title: "Invalid API Key",
+              description: "Please check your Gemini API key and try again.",
+              variant: "destructive"
+            });
+            setShowApiKeyModal(true);
+          } else {
+            toast({
+              title: "Error",
+              description: "Failed to generate section. Please try again.",
+              variant: "destructive"
+            });
+          }
+          return;
+        }
       }
 
       // Add final delay before closing modal
@@ -369,6 +391,7 @@ Start with a level 1 heading for the section name:
         onClose={() => setShowLoadingModal(false)}
         currentSection={currentSection}
         completedSections={completedSections}
+        sections={sectionsList}
       />
 
       <ApiKeyModal 

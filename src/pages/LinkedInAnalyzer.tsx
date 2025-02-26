@@ -10,6 +10,7 @@ import { generatePDF } from '../utils/pdfGenerator';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import SimpleLoadingModal from '../components/ui/SimpleLoadingModal';
 import ApiKeyModal from '../components/ui/ApiKeyModal';
+import { useToast } from '../components/ui/use-toast';
 
 // Configure PDF.js worker to use the local worker file in the public directory
 pdfjs.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.js';
@@ -21,6 +22,7 @@ interface AnalysisResult {
 
 const LinkedInAnalyzer = () => {
   const { geminiKey } = useApiKey();
+  const { toast } = useToast();
   const [showApiKeyModal, setShowApiKeyModal] = useState(false);
   const [file, setFile] = useState<File | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -330,7 +332,7 @@ const LinkedInAnalyzer = () => {
                     const extractTextFromOperators = (ops: any): string => {
                       if (!ops || !ops.fnArray) return '';
                       let text = '';
-                      for (let j = 0; j < ops.fnArray.length; j++) {
+                      for (let j = 0; j <ops.fnArray.length; j++) {
                         const fn = ops.fnArray[j];
                         const args = ops.argsArray[j];
                         if (fn === 3 && args && args[0]) { // ShowText operator
@@ -495,6 +497,13 @@ Format your response with clear headings, bullet points, and a professional tone
           errorMessage = 'The PDF contains too little text to analyze. Please try a different file.';
         } else if (error.message.includes('timed out')) {
           errorMessage = 'The analysis request timed out. Please try again with a smaller PDF file.';
+        } else if (error.message.includes('API key')) {
+          toast({
+            title: "Invalid API Key",
+            description: "Please check your Gemini API key and try again.",
+            variant: "destructive"
+          });
+          setShowApiKeyModal(true);
         }
       }
       
