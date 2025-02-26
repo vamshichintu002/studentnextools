@@ -255,158 +255,159 @@ Start with a level 1 heading for the section name:
           <h1 className="text-3xl font-bold mb-2">Project DOC Maker</h1>
           <p className="text-gray-600">Create professional documentation for your project</p>
         </div>
-        <div className="flex gap-2">
-          <Button
-            onClick={loadSampleData}
-            type="button"
-            variant="outline"
-            className="flex items-center gap-2"
-          >
-            <FileText className="w-4 h-4" />
-            Load Example
-          </Button>
-          {generatedSections.length > 0 && (
-            <>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={handleCopyMarkdown}
-                className="flex items-center gap-2"
-              >
-                {isCopied ? (
-                  <Check className="w-4 h-4 text-green-500" />
-                ) : (
-                  <Copy className="w-4 h-4" />
-                )}
-                {isCopied ? 'Copied!' : 'Copy MD'}
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={handleDownloadWord}
-                className="flex items-center gap-2"
-              >
-                <Download className="w-4 h-4" />
-                Download Word
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={handleDownloadPDF}
-                className="flex items-center gap-2"
-              >
-                <Download className="w-4 h-4" />
-                Download PDF
-              </Button>
-            </>
-          )}
-        </div>
+        <Button
+          onClick={loadSampleData}
+          type="button"
+          variant="outline"
+          className="flex items-center gap-2"
+        >
+          <FileText className="w-4 h-4" />
+          Load Example
+        </Button>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* Input Form */}
-        <form onSubmit={handleSubmit} className="bg-white p-6 rounded-xl shadow-sm">
-          <Input
-            label="Project Title"
-            value={formData.title}
-            onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-            placeholder="Enter your project title"
-            required
-          />
-          <TextArea
-            label="Project Description"
-            value={formData.description}
-            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-            placeholder="Describe your project"
-            rows={4}
-            required
-          />
-          <TextArea
-            label="Key Sections"
-            value={formData.sections}
-            onChange={(e) => setFormData({ ...formData, sections: e.target.value })}
-            placeholder="Enter sections separated by commas (e.g., Introduction, Features, Installation)"
-            rows={3}
-            required
-          />
-          <Button 
-            type="submit" 
-            disabled={isLoading}
-            className="w-full flex items-center justify-center gap-2"
-          >
-            {isLoading && <Loader2 className="w-4 h-4 animate-spin" />}
-            {isLoading ? 'Generating...' : 'Generate Documentation'}
-          </Button>
-        </form>
+      {/* Input Form */}
+      <form onSubmit={handleSubmit} className="bg-white p-6 rounded-xl shadow-sm mb-8">
+        <Input
+          label="Project Title"
+          value={formData.title}
+          onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+          placeholder="Enter your project title"
+          required
+        />
+        <TextArea
+          label="Project Description"
+          value={formData.description}
+          onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+          placeholder="Describe your project"
+          rows={4}
+          required
+        />
+        <TextArea
+          label="Key Sections"
+          value={formData.sections}
+          onChange={(e) => setFormData({ ...formData, sections: e.target.value })}
+          placeholder="Enter sections separated by commas (e.g., Introduction, Features, Installation)"
+          rows={3}
+          required
+        />
+        <Button 
+          type="submit" 
+          disabled={isLoading}
+          className="w-full flex items-center justify-center gap-2"
+        >
+          {isLoading && <Loader2 className="w-4 h-4 animate-spin" />}
+          {isLoading ? 'Generating...' : 'Generate Documentation'}
+        </Button>
+      </form>
 
-        {/* Generated Content Preview */}
-        <div className="space-y-12 overflow-auto max-h-[800px] pr-6 py-4">
-          {generatedSections.map((section, index) => (
-            <div 
-              key={index} 
-              className="relative"
+      {/* Generated Content Preview */}
+      {generatedSections.length > 0 && (
+        <div className="space-y-6">
+          {/* Action Buttons */}
+          <div className="flex gap-4">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleCopyMarkdown}
+              className="flex items-center gap-2"
             >
-              {/* Background pages effect */}
-              <div className="absolute -bottom-2 -right-2 w-full h-full bg-gray-100 rounded-lg transform rotate-1" />
-              <div className="absolute -bottom-1 -right-1 w-full h-full bg-gray-50 rounded-lg transform rotate-0.5" />
-              
-              {/* Main content page */}
-              <div 
-                className="relative bg-white rounded-lg p-8"
-                style={{
-                  boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)'
-                }}
-              >
-                <div className="prose prose-sm max-w-none">
-                  <ReactMarkdown 
-                    remarkPlugins={[remarkGfm]}
-                    components={{
-                      h1: ({ node, ...props }) => (
-                        <div className="text-center mb-8 pb-4 border-b">
-                          <h1 className="text-3xl font-bold" {...props} />
-                        </div>
-                      ),
-                      h2: ({ node, ...props }) => <h2 className="text-2xl font-semibold mb-4 text-gray-800" {...props} />,
-                      h3: ({ node, ...props }) => <h3 className="text-xl font-semibold mb-3 text-gray-700" {...props} />,
-                      p: ({ node, ...props }) => <p className="mb-4 text-gray-600 leading-relaxed" {...props} />,
-                      ul: ({ node, ...props }) => <ul className="list-disc pl-6 mb-4 text-gray-600" {...props} />,
-                      ol: ({ node, ...props }) => <ol className="list-decimal pl-6 mb-4 text-gray-600" {...props} />,
-                      blockquote: ({ node, ...props }) => (
-                        <blockquote className="border-l-4 border-blue-500 pl-4 italic my-4 text-gray-600" {...props} />
-                      ),
-                      code: ({ node, inline, ...props }) => (
-                        inline ? 
-                          <code className="bg-gray-100 rounded px-1 text-sm font-mono" {...props} /> :
-                          <pre className="bg-gray-100 rounded-lg p-4 overflow-auto my-4">
-                            <code className="text-sm font-mono" {...props} />
-                          </pre>
-                      ),
-                      table: ({ node, ...props }) => (
-                        <div className="overflow-x-auto my-4 rounded-lg border border-gray-200">
-                          <table className="min-w-full divide-y divide-gray-200" {...props} />
-                        </div>
-                      ),
-                      th: ({ node, ...props }) => (
-                        <th className="px-4 py-3 bg-gray-50 text-left text-sm font-medium text-gray-600" {...props} />
-                      ),
-                      td: ({ node, ...props }) => (
-                        <td className="px-4 py-3 text-sm text-gray-500 border-t border-gray-200" {...props} />
-                      ),
-                    }}
-                  >
-                    {section.content}
-                  </ReactMarkdown>
-                </div>
+              {isCopied ? (
+                <Check className="w-4 h-4 text-green-500" />
+              ) : (
+                <Copy className="w-4 h-4" />
+              )}
+              {isCopied ? 'Copied!' : 'Copy MD'}
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleDownloadWord}
+              className="flex items-center gap-2"
+            >
+              <Download className="w-4 h-4" />
+              Download Word
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleDownloadPDF}
+              className="flex items-center gap-2"
+            >
+              <Download className="w-4 h-4" />
+              Download PDF
+            </Button>
+          </div>
 
-                {/* Page number */}
-                <div className="absolute bottom-4 right-4 text-sm text-gray-400">
-                  Page {index + 1}
+          {/* Preview Content */}
+          <div className="space-y-12 overflow-auto max-h-[800px] pr-6 py-4">
+            {generatedSections.map((section, index) => (
+              <div 
+                key={index} 
+                className="relative"
+              >
+                {/* Background pages effect */}
+                <div className="absolute -bottom-2 -right-2 w-full h-full bg-gray-100 rounded-lg transform rotate-1" />
+                <div className="absolute -bottom-1 -right-1 w-full h-full bg-gray-50 rounded-lg transform rotate-0.5" />
+                
+                {/* Main content page */}
+                <div 
+                  className="relative bg-white rounded-lg p-8"
+                  style={{
+                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)'
+                  }}
+                >
+                  <div className="prose prose-sm max-w-none">
+                    <ReactMarkdown 
+                      remarkPlugins={[remarkGfm]}
+                      components={{
+                        h1: ({ node, ...props }) => (
+                          <div className="text-center mb-8 pb-4 border-b">
+                            <h1 className="text-3xl font-bold" {...props} />
+                          </div>
+                        ),
+                        h2: ({ node, ...props }) => <h2 className="text-2xl font-semibold mb-4 text-gray-800" {...props} />,
+                        h3: ({ node, ...props }) => <h3 className="text-xl font-semibold mb-3 text-gray-700" {...props} />,
+                        p: ({ node, ...props }) => <p className="mb-4 text-gray-600 leading-relaxed" {...props} />,
+                        ul: ({ node, ...props }) => <ul className="list-disc pl-6 mb-4 text-gray-600" {...props} />,
+                        ol: ({ node, ...props }) => <ol className="list-decimal pl-6 mb-4 text-gray-600" {...props} />,
+                        blockquote: ({ node, ...props }) => (
+                          <blockquote className="border-l-4 border-blue-500 pl-4 italic my-4 text-gray-600" {...props} />
+                        ),
+                        code: ({ node, inline, ...props }) => (
+                          inline ? 
+                            <code className="bg-gray-100 rounded px-1 text-sm font-mono" {...props} /> :
+                            <pre className="bg-gray-100 rounded-lg p-4 overflow-auto my-4">
+                              <code className="text-sm font-mono" {...props} />
+                            </pre>
+                        ),
+                        table: ({ node, ...props }) => (
+                          <div className="overflow-x-auto my-4 rounded-lg border border-gray-200">
+                            <table className="min-w-full divide-y divide-gray-200" {...props} />
+                          </div>
+                        ),
+                        th: ({ node, ...props }) => (
+                          <th className="px-4 py-3 bg-gray-50 text-left text-sm font-medium text-gray-600" {...props} />
+                        ),
+                        td: ({ node, ...props }) => (
+                          <td className="px-4 py-3 text-sm text-gray-500 border-t border-gray-200" {...props} />
+                        ),
+                      }}
+                    >
+                      {section.content}
+                    </ReactMarkdown>
+                  </div>
+
+                  {/* Page number */}
+                  <div className="absolute bottom-4 right-4 text-sm text-gray-400">
+                    Page {index + 1}
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
-      </div>
+      )}
 
       <LoadingModal
         isOpen={showLoadingModal}

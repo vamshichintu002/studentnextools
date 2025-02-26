@@ -58,7 +58,7 @@ Requirements:
 
     try {
       const genAI = new GoogleGenerativeAI(geminiKey);
-      const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-lite-preview-02-05" });
+      const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-lite" });
       const prompt = generatePrompt(formData);
       
       const result = await model.generateContent(prompt);
@@ -102,66 +102,67 @@ Requirements:
         </Button>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <form onSubmit={handleSubmit} className="bg-white p-6 rounded-xl shadow-sm">
-          <Input
-            label="Full Name"
-            value={formData.name}
-            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-            placeholder="Enter your full name"
-            required
-          />
-          <Input
-            label="Job Title / Student Status"
-            value={formData.jobTitle}
-            onChange={(e) => setFormData({ ...formData, jobTitle: e.target.value })}
-            placeholder="e.g., Software Engineer or Computer Science Student"
-            required
-          />
-          <Input
-            label="Industry"
-            value={formData.industry}
-            onChange={(e) => setFormData({ ...formData, industry: e.target.value })}
-            placeholder="e.g., Technology, Education, Finance"
-            required
-          />
-          <TextArea
-            label="Experience"
-            value={formData.experience}
-            onChange={(e) => setFormData({ ...formData, experience: e.target.value })}
-            placeholder="Briefly describe your relevant experience"
-            rows={3}
-            required
-          />
-          <TextArea
-            label="Skills"
-            value={formData.skills}
-            onChange={(e) => setFormData({ ...formData, skills: e.target.value })}
-            placeholder="List your key skills"
-            rows={3}
-            required
-          />
-          <TextArea
-            label="Career Goals"
-            value={formData.careerGoals}
-            onChange={(e) => setFormData({ ...formData, careerGoals: e.target.value })}
-            placeholder="What are your career aspirations?"
-            rows={3}
-            required
-          />
-          <TextArea
-            label="Achievements (Optional)"
-            value={formData.achievements}
-            onChange={(e) => setFormData({ ...formData, achievements: e.target.value })}
-            placeholder="List any notable achievements"
-            rows={3}
-          />
-          <Button type="submit" isFullWidth>
-            Generate Summary
-          </Button>
-        </form>
+      {/* Input Form */}
+      <form onSubmit={handleSubmit} className="bg-white p-6 rounded-xl shadow-sm mb-8">
+        <Input
+          label="Full Name"
+          value={formData.name}
+          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+          placeholder="Enter your full name"
+          required
+        />
+        <Input
+          label="Job Title / Student Status"
+          value={formData.jobTitle}
+          onChange={(e) => setFormData({ ...formData, jobTitle: e.target.value })}
+          placeholder="e.g., Software Engineer or Computer Science Student"
+          required
+        />
+        <Input
+          label="Industry"
+          value={formData.industry}
+          onChange={(e) => setFormData({ ...formData, industry: e.target.value })}
+          placeholder="e.g., Technology, Education, Finance"
+          required
+        />
+        <TextArea
+          label="Experience"
+          value={formData.experience}
+          onChange={(e) => setFormData({ ...formData, experience: e.target.value })}
+          placeholder="Briefly describe your relevant experience"
+          rows={3}
+          required
+        />
+        <TextArea
+          label="Skills"
+          value={formData.skills}
+          onChange={(e) => setFormData({ ...formData, skills: e.target.value })}
+          placeholder="List your key skills"
+          rows={3}
+          required
+        />
+        <TextArea
+          label="Career Goals"
+          value={formData.careerGoals}
+          onChange={(e) => setFormData({ ...formData, careerGoals: e.target.value })}
+          placeholder="What are your career aspirations?"
+          rows={3}
+          required
+        />
+        <TextArea
+          label="Achievements (Optional)"
+          value={formData.achievements}
+          onChange={(e) => setFormData({ ...formData, achievements: e.target.value })}
+          placeholder="List any notable achievements"
+          rows={3}
+        />
+        <Button type="submit" isFullWidth>
+          Generate Summary
+        </Button>
+      </form>
 
-        {/* Preview Section */}
+      {/* Preview Section */}
+      {(generatedSummary || isLoading || error) && (
         <div className="bg-white p-6 rounded-xl shadow-sm">
           <h2 className="text-xl font-semibold mb-4">Generated Summary Preview</h2>
           {isLoading && (
@@ -268,7 +269,7 @@ Requirements:
             </div>
           )}
         </div>
-      </div>
+      )}
     </div>
   );
 };

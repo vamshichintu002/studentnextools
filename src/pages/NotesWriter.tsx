@@ -214,196 +214,190 @@ Start directly with the content.`;
         completedSections={completedSections}
       />
       
-      <div className="grid gap-8 md:grid-cols-2">
-        {/* Input Form */}
-        <div>
-          <div className="bg-white p-6 rounded-lg shadow">
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="space-y-2">
-                <Input
-                  label="Unit Title"
-                  value={formData.unitTitle}
-                  onChange={(e) => setFormData(prev => ({ ...prev, unitTitle: e.target.value }))}
-                  placeholder="e.g., Data Structures and Algorithms"
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <TextArea
-                  label="Topics (comma-separated)"
-                  value={formData.topics}
-                  onChange={(e) => setFormData(prev => ({ ...prev, topics: e.target.value }))}
-                  placeholder="e.g., Arrays, Linked Lists, Binary Trees"
-                  rows={4}
-                />
-              </div>
-
-              <Button 
-                type="submit" 
-                disabled={isLoading}
-                className="w-full flex items-center justify-center gap-2"
-              >
-                {isLoading ? (
-                  <>
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    <span>Generating Notes...</span>
-                  </>
-                ) : (
-                  'Generate Notes'
-                )}
-              </Button>
-            </form>
+      {/* Input Form */}
+      <div className="bg-white p-6 rounded-lg shadow mb-8">
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="space-y-2">
+            <Input
+              label="Unit Title"
+              value={formData.unitTitle}
+              onChange={(e) => setFormData(prev => ({ ...prev, unitTitle: e.target.value }))}
+              placeholder="e.g., Data Structures and Algorithms"
+            />
           </div>
-        </div>
+          
+          <div className="space-y-2">
+            <TextArea
+              label="Topics (comma-separated)"
+              value={formData.topics}
+              onChange={(e) => setFormData(prev => ({ ...prev, topics: e.target.value }))}
+              placeholder="e.g., Arrays, Linked Lists, Binary Trees"
+              rows={4}
+            />
+          </div>
 
-        {/* Preview and Actions */}
+          <Button 
+            type="submit" 
+            disabled={isLoading}
+            className="w-full flex items-center justify-center gap-2"
+          >
+            {isLoading ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                <span>Generating Notes...</span>
+              </>
+            ) : (
+              'Generate Notes'
+            )}
+          </Button>
+        </form>
+      </div>
+
+      {/* Preview and Actions */}
+      {generatedContent && !isLoading && (
         <div className="space-y-4">
-          {generatedContent && !isLoading && (
-            <>
-              {/* Action Buttons */}
-              <div className="flex gap-4 mb-4">
-                <Button
-                  onClick={() => {
-                    navigator.clipboard.writeText(generatedContent);
-                    setCopied(true);
-                    setTimeout(() => setCopied(false), 2000);
-                    toast({
-                      title: "Success",
-                      description: "Content copied to clipboard!"
-                    });
-                  }}
-                  variant="secondary"
-                  className="flex items-center gap-2"
-                >
-                  {copied ? (
-                    <Check className="h-4 w-4" />
-                  ) : (
-                    <Copy className="h-4 w-4" />
-                  )}
-                  Copy Text
-                </Button>
-                
-                <Button
-                  onClick={handleDownloadWord}
-                  variant="secondary"
-                  className="flex items-center gap-2"
-                >
-                  <Download className="h-4 w-4" />
-                  Download Word
-                </Button>
+          {/* Action Buttons */}
+          <div className="flex gap-4 mb-4">
+            <Button
+              onClick={() => {
+                navigator.clipboard.writeText(generatedContent);
+                setCopied(true);
+                setTimeout(() => setCopied(false), 2000);
+                toast({
+                  title: "Success",
+                  description: "Content copied to clipboard!"
+                });
+              }}
+              variant="secondary"
+              className="flex items-center gap-2"
+            >
+              {copied ? (
+                <Check className="h-4 w-4" />
+              ) : (
+                <Copy className="h-4 w-4" />
+              )}
+              Copy Text
+            </Button>
+            
+            <Button
+              onClick={handleDownloadWord}
+              variant="secondary"
+              className="flex items-center gap-2"
+            >
+              <Download className="h-4 w-4" />
+              Download Word
+            </Button>
 
-                <Button
-                  onClick={handleDownloadPDF}
-                  variant="secondary"
-                  className="flex items-center gap-2"
-                >
-                  <Download className="h-4 w-4" />
-                  Download PDF
-                </Button>
-              </div>
+            <Button
+              onClick={handleDownloadPDF}
+              variant="secondary"
+              className="flex items-center gap-2"
+            >
+              <Download className="h-4 w-4" />
+              Download PDF
+            </Button>
+          </div>
 
-              {/* Preview */}
-              <div className="overflow-auto max-h-[600px] pr-6 py-4">
-                {/* Unit Title */}
-                <div className="relative mb-12">
-                  {/* Background pages effect */}
-                  <div className="absolute -bottom-2 -right-2 w-full h-full bg-gray-100 rounded-lg transform rotate-1" />
-                  <div className="absolute -bottom-1 -right-1 w-full h-full bg-gray-50 rounded-lg transform rotate-0.5" />
-                  
-                  {/* Main content page */}
-                  <div 
-                    className="relative bg-white rounded-lg p-8"
-                    style={{
-                      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)'
-                    }}
-                  >
-                    <div className="prose prose-sm max-w-none">
-                      <div className="text-center mb-8 pb-4 border-b">
-                        <h1 className="text-3xl font-bold">{formData.unitTitle}</h1>
-                        <p className="text-gray-600 mt-2">Study Notes</p>
-                      </div>
-                      <p className="text-gray-600 text-center">
-                        These notes cover the following topics: {formData.topics}
-                      </p>
-                    </div>
-                    
-                    {/* Page number */}
-                    <div className="absolute bottom-4 right-4 text-sm text-gray-400">
-                      Cover Page
-                    </div>
+          {/* Preview */}
+          <div className="overflow-auto max-h-[600px] pr-6 py-4">
+            {/* Unit Title */}
+            <div className="relative mb-12">
+              {/* Background pages effect */}
+              <div className="absolute -bottom-2 -right-2 w-full h-full bg-gray-100 rounded-lg transform rotate-1" />
+              <div className="absolute -bottom-1 -right-1 w-full h-full bg-gray-50 rounded-lg transform rotate-0.5" />
+              
+              {/* Main content page */}
+              <div 
+                className="relative bg-white rounded-lg p-8"
+                style={{
+                  boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)'
+                }}
+              >
+                <div className="prose prose-sm max-w-none">
+                  <div className="text-center mb-8 pb-4 border-b">
+                    <h1 className="text-3xl font-bold">{formData.unitTitle}</h1>
+                    <p className="text-gray-600 mt-2">Study Notes</p>
                   </div>
+                  <p className="text-gray-600 text-center">
+                    These notes cover the following topics: {formData.topics}
+                  </p>
                 </div>
+                
+                {/* Page number */}
+                <div className="absolute bottom-4 right-4 text-sm text-gray-400">
+                  Cover Page
+                </div>
+              </div>
+            </div>
 
-                {/* Topic Sections */}
-                {topicContents.map((topicContent, index) => (
-                  <div 
-                    key={index} 
-                    className="relative mb-12"
-                  >
-                    {/* Background pages effect */}
-                    <div className="absolute -bottom-2 -right-2 w-full h-full bg-gray-100 rounded-lg transform rotate-1" />
-                    <div className="absolute -bottom-1 -right-1 w-full h-full bg-gray-50 rounded-lg transform rotate-0.5" />
-                    
-                    {/* Main content page */}
-                    <div 
-                      className="relative bg-white rounded-lg p-8"
-                      style={{
-                        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)'
+            {/* Topic Sections */}
+            {topicContents.map((topicContent, index) => (
+              <div 
+                key={index} 
+                className="relative mb-12"
+              >
+                {/* Background pages effect */}
+                <div className="absolute -bottom-2 -right-2 w-full h-full bg-gray-100 rounded-lg transform rotate-1" />
+                <div className="absolute -bottom-1 -right-1 w-full h-full bg-gray-50 rounded-lg transform rotate-0.5" />
+                
+                {/* Main content page */}
+                <div 
+                  className="relative bg-white rounded-lg p-8"
+                  style={{
+                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)'
+                  }}
+                >
+                  <div className="prose prose-sm max-w-none">
+                    <ReactMarkdown 
+                      remarkPlugins={[remarkGfm]}
+                      components={{
+                        h1: ({ node, ...props }) => (
+                          <div className="text-center mb-8 pb-4 border-b">
+                            <h1 className="text-3xl font-bold" {...props} />
+                          </div>
+                        ),
+                        h2: ({ node, ...props }) => <h2 className="text-2xl font-semibold mb-4 text-gray-800" {...props} />,
+                        h3: ({ node, ...props }) => <h3 className="text-xl font-semibold mb-3 text-gray-700" {...props} />,
+                        p: ({ node, ...props }) => <p className="mb-4 text-gray-600 leading-relaxed" {...props} />,
+                        ul: ({ node, ...props }) => <ul className="list-disc pl-6 mb-4 text-gray-600" {...props} />,
+                        ol: ({ node, ...props }) => <ol className="list-decimal pl-6 mb-4 text-gray-600" {...props} />,
+                        blockquote: ({ node, ...props }) => (
+                          <blockquote className="border-l-4 border-blue-500 pl-4 italic my-4 text-gray-600" {...props} />
+                        ),
+                        code: ({ node, inline, ...props }) => (
+                          inline ? 
+                            <code className="bg-gray-100 rounded px-1 text-sm font-mono" {...props} /> :
+                            <pre className="bg-gray-100 rounded-lg p-4 overflow-auto my-4">
+                              <code className="text-sm font-mono" {...props} />
+                            </pre>
+                        ),
+                        table: ({ node, ...props }) => (
+                          <div className="overflow-x-auto my-4 rounded-lg border border-gray-200">
+                            <table className="min-w-full divide-y divide-gray-200" {...props} />
+                          </div>
+                        ),
+                        th: ({ node, ...props }) => (
+                          <th className="px-4 py-3 bg-gray-50 text-left text-sm font-medium text-gray-600" {...props} />
+                        ),
+                        td: ({ node, ...props }) => (
+                          <td className="px-4 py-3 text-sm text-gray-500 border-t border-gray-200" {...props} />
+                        ),
                       }}
                     >
-                      <div className="prose prose-sm max-w-none">
-                        <ReactMarkdown 
-                          remarkPlugins={[remarkGfm]}
-                          components={{
-                            h1: ({ node, ...props }) => (
-                              <div className="text-center mb-8 pb-4 border-b">
-                                <h1 className="text-3xl font-bold" {...props} />
-                              </div>
-                            ),
-                            h2: ({ node, ...props }) => <h2 className="text-2xl font-semibold mb-4 text-gray-800" {...props} />,
-                            h3: ({ node, ...props }) => <h3 className="text-xl font-semibold mb-3 text-gray-700" {...props} />,
-                            p: ({ node, ...props }) => <p className="mb-4 text-gray-600 leading-relaxed" {...props} />,
-                            ul: ({ node, ...props }) => <ul className="list-disc pl-6 mb-4 text-gray-600" {...props} />,
-                            ol: ({ node, ...props }) => <ol className="list-decimal pl-6 mb-4 text-gray-600" {...props} />,
-                            blockquote: ({ node, ...props }) => (
-                              <blockquote className="border-l-4 border-blue-500 pl-4 italic my-4 text-gray-600" {...props} />
-                            ),
-                            code: ({ node, inline, ...props }) => (
-                              inline ? 
-                                <code className="bg-gray-100 rounded px-1 text-sm font-mono" {...props} /> :
-                                <pre className="bg-gray-100 rounded-lg p-4 overflow-auto my-4">
-                                  <code className="text-sm font-mono" {...props} />
-                                </pre>
-                            ),
-                            table: ({ node, ...props }) => (
-                              <div className="overflow-x-auto my-4 rounded-lg border border-gray-200">
-                                <table className="min-w-full divide-y divide-gray-200" {...props} />
-                              </div>
-                            ),
-                            th: ({ node, ...props }) => (
-                              <th className="px-4 py-3 bg-gray-50 text-left text-sm font-medium text-gray-600" {...props} />
-                            ),
-                            td: ({ node, ...props }) => (
-                              <td className="px-4 py-3 text-sm text-gray-500 border-t border-gray-200" {...props} />
-                            ),
-                          }}
-                        >
-                          {`## ${topicContent.topic}\n\n${topicContent.content}`}
-                        </ReactMarkdown>
-                      </div>
-
-                      {/* Page number */}
-                      <div className="absolute bottom-4 right-4 text-sm text-gray-400">
-                        Page {index + 1}
-                      </div>
-                    </div>
+                      {`## ${topicContent.topic}\n\n${topicContent.content}`}
+                    </ReactMarkdown>
                   </div>
-                ))}
+
+                  {/* Page number */}
+                  <div className="absolute bottom-4 right-4 text-sm text-gray-400">
+                    Page {index + 1}
+                  </div>
+                </div>
               </div>
-            </>
-          )}
+            ))}
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
