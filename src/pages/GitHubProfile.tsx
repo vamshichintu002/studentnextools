@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import { GoogleGenerativeAI } from '@google/generative-ai';
-import ReactMarkdown from 'react-markdown';
 import Input from '../components/ui/Input';
 import TextArea from '../components/ui/TextArea';
 import Button from '../components/ui/Button';
 import { useAuth } from '../lib/AuthContext';
 import { useApiKey } from '../lib/ApiKeyContext';
+import SimpleLoadingModal from '../components/ui/SimpleLoadingModal';
+import MarkdownModal from '../components/ui/MarkdownModal';
 
 const GitHubProfile = () => {
   const { user } = useAuth();
@@ -26,6 +27,8 @@ const GitHubProfile = () => {
   const [generatedProfile, setGeneratedProfile] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [showLoadingModal, setShowLoadingModal] = useState(false);
+  const [showProfileModal, setShowProfileModal] = useState(false);
 
   const generatePrompt = (data: typeof formData) => {
     return `Create a professional GitHub profile README.md with the following information:
@@ -62,6 +65,7 @@ Please format it as a professional README.md with markdown,  including appropria
     }
 
     setIsLoading(true);
+    setShowLoadingModal(true);
     setError('');
 
     try {
@@ -72,16 +76,17 @@ Please format it as a professional README.md with markdown,  including appropria
       const result = await model.generateContent(prompt);
       const response = await result.response;
       const text = response.text();
-
       
       const cleanedText = text.replace(/^```markdown\n/, '').replace(/^```\n/, '').replace(/\n```$/, '');
       
       setGeneratedProfile(cleanedText);
+      setShowProfileModal(true);
     } catch (err) {
       setError('Failed to generate profile. Please check your API key and try again.');
       console.error('Error generating profile:', err);
     } finally {
       setIsLoading(false);
+      setShowLoadingModal(false);
     }
   };
 
@@ -103,6 +108,17 @@ Please format it as a professional README.md with markdown,  including appropria
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
+      <SimpleLoadingModal 
+        isOpen={showLoadingModal}
+        message="Generating your GitHub profile README... This may take a few moments."
+      />
+      
+      <MarkdownModal
+        isOpen={showProfileModal}
+        onClose={() => setShowProfileModal(false)}
+        content={generatedProfile}
+      />
+
       <div className="flex justify-between items-center mb-8">
         <div>
           <h1 className="text-3xl font-bold mb-2">GitHub Profile Maker</h1>
@@ -218,108 +234,18 @@ Please format it as a professional README.md with markdown,  including appropria
           />
         </div>
 
-        <Button type="submit" isFullWidth>
+        <Button 
+          type="submit" 
+          isFullWidth
+          disabled={isLoading}
+        >
           Generate Profile README
         </Button>
       </form>
 
-      {/* Preview Section */}
-      {(generatedProfile || isLoading || error) && (
+      {error && (
         <div className="bg-white p-6 rounded-xl shadow-sm">
-          <h2 className="text-xl font-semibold mb-4">Generated Profile Preview</h2>
-          {isLoading && (
-            <div className="flex items-center justify-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
-            </div>
-          )}
-          {error && (
-            <div className="text-red-500 mb-4">{error}</div>
-          )}
-          {generatedProfile && !isLoading && (
-            <div className="prose prose-github max-w-none">
-              <div className="bg-gray-50 p-6 rounded-lg overflow-auto max-h-[600px] markdown-preview">
-                <ReactMarkdown
-                  components={{
-                    h1: ({ node, ...props }) => <h1 className="text-3xl font-bold border-b pb-2 mb-4" {...props} />,
-                    h2: ({ node, ...props }) => <h2 className="text-2xl font-semibold mt-6 mb-4" {...props} />,
-                    h3: ({ node, ...props }) => <h3 className="text-xl font-semibold mt-4 mb-2" {...props} />,
-                    p: ({ node, ...props }) => <p className="mb-4 leading-relaxed" {...props} />,
-                    ul: ({ node, ...props }) => <ul className="list-disc pl-6 mb-4" {...props} />,
-                    li: ({ node, ...props }) => <li className="mb-1" {...props} />,
-                    a: ({ node, ...props }) => <a className="text-blue-600 hover:underline" {...props} />,
-                    img: ({ node, ...props }) => <img className="max-w-full rounded-md my-4" {...props} />,
-                    code: ({ node, inline, ...props }) => 
-                      inline ? (
-                        <code className="bg-gray-100 rounded px-1 py-0.5 text-sm" {...props} />
-                      ) : (
-                        <code className="block bg-gray-100 rounded p-4 overflow-x-auto text-sm" {...props} />
-                      )
-                  }}
-                >
-                  {generatedProfile}
-                </ReactMarkdown>
-              </div>
-              <div className="flex gap-4 mt-4">
-                <Button
-                  onClick={() => navigator.clipboard.writeText(generatedProfile)}
-                  type="button"
-                  className="bg-gray-100 hover:bg-gray-200 text-gray-800"
-                >
-                  Copy Markdown
-                </Button>
-                <Button
-                  onClick={() => {
-                    const previewWindow = window.open('', '_blank');
-                    if (previewWindow) {
-                      previewWindow.document.write(`
-                        <html>
-                          <head>
-                            <title>GitHub Profile Preview</title>
-                            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.2.0/github-markdown.min.css">
-                            <style>
-                              body {
-                                background-color: #ffffff;
-                                color: #24292e;
-                              }
-                              .markdown-body {
-                                box-sizing: border-box;
-                                min-width: 200px;
-                                max-width: 980px;
-                                margin: 0 auto;
-                                padding: 45px;
-                                background-color: #ffffff;
-                                color: #24292e;
-                                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
-                              }
-                              .markdown-body * {
-                                color: inherit;
-                              }
-                              @media (max-width: 767px) {
-                                .markdown-body {
-                                  padding: 15px;
-                                }
-                              }
-                            </style>
-                          </head>
-                          <body class="markdown-body">
-                            <div id="content"></div>
-                            <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-                            <script>
-                              document.getElementById('content').innerHTML = marked.parse(${JSON.stringify(generatedProfile)});
-                            </script>
-                          </body>
-                        </html>
-                      `);
-                    }
-                  }}
-                  type="button"
-                  className="bg-blue-600 hover:bg-blue-700 text-white"
-                >
-                  Preview in New Tab
-                </Button>
-              </div>
-            </div>
-          )}
+          <div className="text-red-500">{error}</div>
         </div>
       )}
     </div>

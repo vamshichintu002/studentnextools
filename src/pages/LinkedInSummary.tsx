@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import { GoogleGenerativeAI } from '@google/generative-ai';
-import ReactMarkdown from 'react-markdown';
 import Input from '../components/ui/Input';
 import TextArea from '../components/ui/TextArea';
 import Button from '../components/ui/Button';
 import { useAuth } from '../lib/AuthContext';
 import { useApiKey } from '../lib/ApiKeyContext';
+import SimpleLoadingModal from '../components/ui/SimpleLoadingModal';
+import SummaryModal from '../components/ui/SummaryModal';
 
 const LinkedInSummary = () => {
   const { user } = useAuth();
@@ -23,6 +24,8 @@ const LinkedInSummary = () => {
   const [generatedSummary, setGeneratedSummary] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [showLoadingModal, setShowLoadingModal] = useState(false);
+  const [showSummaryModal, setShowSummaryModal] = useState(false);
 
   const generatePrompt = (data: typeof formData) => {
     return `Write a LinkedIn summary with these details:
@@ -54,6 +57,7 @@ Requirements:
     }
 
     setIsLoading(true);
+    setShowLoadingModal(true);
     setError('');
 
     try {
@@ -66,11 +70,13 @@ Requirements:
       const text = response.text();
       
       setGeneratedSummary(text);
+      setShowSummaryModal(true);
     } catch (err) {
       setError('Failed to generate summary. Please check your API key and try again.');
       console.error('Error generating summary:', err);
     } finally {
       setIsLoading(false);
+      setShowLoadingModal(false);
     }
   };
 
@@ -88,6 +94,17 @@ Requirements:
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
+      <SimpleLoadingModal 
+        isOpen={showLoadingModal}
+        message="Generating your LinkedIn summary... This may take a few moments."
+      />
+      
+      <SummaryModal
+        isOpen={showSummaryModal}
+        onClose={() => setShowSummaryModal(false)}
+        content={generatedSummary}
+      />
+
       <div className="flex justify-between items-center mb-8">
         <div>
           <h1 className="text-3xl font-bold mb-2">LinkedIn Summary Generator</h1>
@@ -156,118 +173,18 @@ Requirements:
           placeholder="List any notable achievements"
           rows={3}
         />
-        <Button type="submit" isFullWidth>
+        <Button 
+          type="submit" 
+          isFullWidth
+          disabled={isLoading}
+        >
           Generate Summary
         </Button>
       </form>
 
-      {/* Preview Section */}
-      {(generatedSummary || isLoading || error) && (
+      {error && (
         <div className="bg-white p-6 rounded-xl shadow-sm">
-          <h2 className="text-xl font-semibold mb-4">Generated Summary Preview</h2>
-          {isLoading && (
-            <div className="flex items-center justify-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
-            </div>
-          )}
-          {error && (
-            <div className="text-red-500 mb-4">{error}</div>
-          )}
-          {generatedSummary && !isLoading && (
-            <div className="prose max-w-none">
-              <div className="bg-gray-50 p-6 rounded-lg overflow-auto max-h-[600px] linkedin-preview">
-                <div className="text-gray-800 leading-relaxed whitespace-pre-wrap" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif' }}>
-                  {generatedSummary}
-                </div>
-              </div>
-              <style jsx global>{`
-                .linkedin-preview {
-                  font-size: 16px;
-                  line-height: 1.6;
-                }
-                .linkedin-preview p {
-                  margin-bottom: 1rem;
-                }
-                .linkedin-preview ul {
-                  list-style-type: disc;
-                  margin-left: 1.5rem;
-                  margin-bottom: 1rem;
-                }
-                .linkedin-preview li {
-                  margin-bottom: 0.5rem;
-                }
-              `}</style>
-              <div className="flex gap-4 mt-4">
-                <Button
-                  onClick={() => navigator.clipboard.writeText(generatedSummary)}
-                  type="button"
-                  className="bg-gray-100 hover:bg-gray-200 text-gray-800"
-                >
-                  Copy Text
-                </Button>
-                <Button
-                  onClick={() => {
-                    const previewWindow = window.open('', '_blank');
-                    if (previewWindow) {
-                      previewWindow.document.write(`
-                        <html>
-                          <head>
-                            <title>LinkedIn Summary Preview</title>
-                            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.2.0/github-markdown.min.css">
-                            <style>
-                              body {
-                                background-color: #ffffff;
-                                color: #24292e;
-                              }
-                              .markdown-body {
-                                box-sizing: border-box;
-                                min-width: 200px;
-                                max-width: 980px;
-                                margin: 0 auto;
-                                padding: 45px;
-                                background-color: #ffffff;
-                                color: #24292e;
-                                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
-                                line-height: 1.6;
-                              }
-                              .markdown-body * {
-                                color: inherit;
-                              }
-                              .markdown-body p {
-                                margin-bottom: 16px;
-                              }
-                              .markdown-body ul {
-                                margin-bottom: 16px;
-                                padding-left: 2em;
-                              }
-                              .markdown-body li {
-                                margin: 0.25em 0;
-                              }
-                              @media (max-width: 767px) {
-                                .markdown-body {
-                                  padding: 15px;
-                                }
-                              }
-                            </style>
-                          </head>
-                          <body class="markdown-body">
-                            <div id="content"></div>
-                            <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-                            <script>
-                              document.getElementById('content').innerHTML = marked.parse(${JSON.stringify(generatedSummary)});
-                            </script>
-                          </body>
-                        </html>
-                      `);
-                    }
-                  }}
-                  type="button"
-                >
-                  Preview in New Tab
-                </Button>
-              </div>
-            </div>
-          )}
+          <div className="text-red-500">{error}</div>
         </div>
       )}
     </div>

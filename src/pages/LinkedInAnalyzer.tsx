@@ -9,6 +9,7 @@ import * as pdfjs from 'pdfjs-dist';
 import { saveAs } from 'file-saver';
 import { generatePDF } from '../utils/pdfGenerator';
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import SimpleLoadingModal from '../components/ui/SimpleLoadingModal';
 
 // Configure PDF.js worker to use the local worker file in the public directory
 pdfjs.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.js';
@@ -23,17 +24,16 @@ const LinkedInAnalyzer = () => {
   const { toast } = useToast();
   const [file, setFile] = useState<File | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [pdfText, setPdfText] = useState<string>('');
   const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
   const [isCopied, setIsCopied] = useState(false);
   const [parsingProgress, setParsingProgress] = useState<string>('');
+  const [showLoadingModal, setShowLoadingModal] = useState(false);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const selectedFile = e.target.files[0];
       if (selectedFile.type === 'application/pdf') {
         setFile(selectedFile);
-        setPdfText('');
         setAnalysisResult(null);
       } else {
         toast({
@@ -425,40 +425,32 @@ FINAL VERDICT: Give a concise 2-3 sentence summary of the resume's effectiveness
 Format your response with clear headings, bullet points, and a professional tone. Include the numerical scores for each section and the overall score.`;
   };
 
-  const analyzeResume = async () => {
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setShowLoadingModal(true);
+    await handleAnalyzeResume();
+  };
+
+  const handleAnalyzeResume = async () => {
     if (!file || !geminiKey) {
+      setShowLoadingModal(false);
       toast({
-        title: "Missing Information",
-        description: file ? "Please add your Gemini API key in the profile settings." : "Please upload a PDF file.",
+        title: "Error",
+        description: file ? "Please set your Gemini API key first." : "Please upload a PDF file first.",
         variant: "destructive"
       });
       return;
     }
 
+    setIsLoading(true);
+    
     try {
-      setIsLoading(true);
-      setParsingProgress('');
+      const text = await extractTextFromPDF(file);
       
-      // Extract text from PDF
-      console.log('Starting resume analysis for file:', file.name);
-      const extractedText = await extractTextFromPDF(file);
-      setPdfText(extractedText);
-      
-      if (extractedText.trim().length < 50) {
-        throw new Error('The extracted text is too short to be a valid resume');
-      }
-      
-      console.log('Text extracted successfully, length:', extractedText.length);
-      setParsingProgress('Analyzing resume content...');
-      
-      // Initialize Gemini API
-      console.log('Initializing Gemini API...');
       const genAI = new GoogleGenerativeAI(geminiKey);
       const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
-      
-      // Generate analysis
-      console.log('Sending text to Gemini API for analysis...');
-      const prompt = generateAnalysisPrompt(extractedText);
+
+      const prompt = generateAnalysisPrompt(text);
       
       // Add a timeout for the API call
       const timeoutPromise = new Promise((_, reject) => 
@@ -509,12 +501,8 @@ Format your response with clear headings, bullet points, and a professional tone
       });
     } finally {
       setIsLoading(false);
+      setShowLoadingModal(false);
     }
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    analyzeResume();
   };
 
   const handleCopyAnalysis = async () => {
@@ -569,6 +557,10 @@ Format your response with clear headings, bullet points, and a professional tone
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-8">
+      <SimpleLoadingModal 
+        isOpen={showLoadingModal}
+        message="Analyzing your resume... This may take a few moments."
+      />
       <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className="text-3xl font-bold mb-2">LinkedIn Resume Analyzer</h1>
@@ -634,17 +626,6 @@ Format your response with clear headings, bullet points, and a professional tone
             )}
           </form>
         </div>
-
-        {pdfText && !analysisResult && (
-          <div className="bg-white p-6 rounded-xl shadow-sm">
-            <h2 className="text-lg font-semibold mb-2">Extracted Text</h2>
-            <div className="max-h-[300px] overflow-y-auto bg-gray-50 p-4 rounded text-sm font-mono">
-              {pdfText.split('\n').map((line, i) => (
-                <p key={i} className={line.trim() ? '' : 'h-4'}>{line}</p>
-              ))}
-            </div>
-          </div>
-        )}
 
         {/* Analysis Results */}
         {analysisResult && (
