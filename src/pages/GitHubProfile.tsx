@@ -7,6 +7,7 @@ import { useAuth } from '../lib/AuthContext';
 import { useApiKey } from '../lib/ApiKeyContext';
 import SimpleLoadingModal from '../components/ui/SimpleLoadingModal';
 import MarkdownModal from '../components/ui/MarkdownModal';
+import ApiKeyModal from '../components/ui/ApiKeyModal';
 
 const GitHubProfile = () => {
   const { user } = useAuth();
@@ -29,6 +30,7 @@ const GitHubProfile = () => {
   const [error, setError] = useState('');
   const [showLoadingModal, setShowLoadingModal] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
+  const [showApiKeyModal, setShowApiKeyModal] = useState(false);
 
   const generatePrompt = (data: typeof formData) => {
     return `Create a professional GitHub profile README.md with the following information:
@@ -60,7 +62,7 @@ Please format it as a professional README.md with markdown,  including appropria
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!geminiKey) {
-      setError('Please add your Gemini API key in the Dashboard settings before generating content.');
+      setShowApiKeyModal(true);
       return;
     }
 
@@ -117,6 +119,11 @@ Please format it as a professional README.md with markdown,  including appropria
         isOpen={showProfileModal}
         onClose={() => setShowProfileModal(false)}
         content={generatedProfile}
+      />
+
+      <ApiKeyModal 
+        isOpen={showApiKeyModal}
+        onClose={() => setShowApiKeyModal(false)}
       />
 
       <div className="flex justify-between items-center mb-8">

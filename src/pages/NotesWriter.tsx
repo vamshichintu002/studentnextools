@@ -12,6 +12,7 @@ import { generateWordDocument } from '../utils/wordGenerator';
 import { saveAs } from 'file-saver';
 import { Loader2, Copy, Download, Check } from 'lucide-react';
 import LoadingModal from '../components/ui/LoadingModal';
+import ApiKeyModal from '../components/ui/ApiKeyModal';
 
 interface FormData {
   unitTitle: string;
@@ -37,6 +38,7 @@ export default function NotesWriter() {
   const [currentSection, setCurrentSection] = useState<string | null>(null);
   const [completedSections, setCompletedSections] = useState<string[]>([]);
   const [topicContents, setTopicContents] = useState<TopicContent[]>([]);
+  const [showApiKeyModal, setShowApiKeyModal] = useState(false);
 
   const generateTopicPrompt = (topic: string, context: { unitTitle: string }) => {
     return `Generate comprehensive study notes for the topic "${topic}" within the unit "${context.unitTitle}".
@@ -82,11 +84,7 @@ Start directly with the content.`;
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!geminiKey) {
-      toast({
-        title: "API Key Required",
-        description: "Please set your Gemini API key in the profile settings.",
-        variant: "destructive"
-      });
+      setShowApiKeyModal(true);
       return;
     }
 
@@ -212,6 +210,11 @@ Start directly with the content.`;
         sections={formData.topics.split(',').map(topic => topic.trim())}
         currentSection={currentSection}
         completedSections={completedSections}
+      />
+      
+      <ApiKeyModal 
+        isOpen={showApiKeyModal}
+        onClose={() => setShowApiKeyModal(false)}
       />
       
       {/* Input Form */}

@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { useApiKey } from '../lib/ApiKeyContext';
-import { useToast } from '../components/ui/use-toast';
 import Input from '../components/ui/Input';
 import TextArea from '../components/ui/TextArea';
 import Button from '../components/ui/Button';
 import { Loader2, FileText, Download, Copy, Check } from 'lucide-react';
 import LoadingModal from '../components/ui/LoadingModal';
+import ApiKeyModal from '../components/ui/ApiKeyModal';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { generateWordDocument } from '../utils/wordGenerator';
@@ -32,7 +32,7 @@ const sampleData: FormData = {
 
 const DocMaker = () => {
   const { geminiKey } = useApiKey();
-  const { toast } = useToast();
+  const [showApiKeyModal, setShowApiKeyModal] = useState(false);
   const [formData, setFormData] = useState<FormData>({
     title: '',
     description: '',
@@ -79,11 +79,7 @@ Start with a level 1 heading for the section name:
     e.preventDefault();
     
     if (!geminiKey) {
-      toast({
-        title: "API Key Required",
-        description: "Please add your Gemini API key in the profile settings to use this feature.",
-        variant: "destructive"
-      });
+      setShowApiKeyModal(true);
       return;
     }
 
@@ -136,18 +132,8 @@ Start with a level 1 heading for the section name:
       setCurrentSection(null);
       setShowLoadingModal(false);
 
-      toast({
-        title: "Documentation Generated",
-        description: "All sections have been generated successfully.",
-      });
-
     } catch (error) {
       console.error('Error generating documentation:', error);
-      toast({
-        title: "Error",
-        description: "Failed to generate documentation. Please try again.",
-        variant: "destructive"
-      });
       setShowLoadingModal(false);
     } finally {
       setIsLoading(false);
@@ -175,17 +161,8 @@ Start with a level 1 heading for the section name:
         sections: generatedSections
       });
       
-      toast({
-        title: "Document Downloaded",
-        description: "Word document has been generated and downloaded successfully.",
-      });
     } catch (error) {
       console.error('Error generating Word document:', error);
-      toast({
-        title: "Error",
-        description: "Failed to generate Word document. Please try again.",
-        variant: "destructive"
-      });
     }
   };
 
@@ -195,20 +172,11 @@ Start with a level 1 heading for the section name:
       await navigator.clipboard.writeText(markdownContent);
       
       setIsCopied(true);
-      toast({
-        title: "Copied!",
-        description: "Documentation markdown has been copied to clipboard.",
-      });
 
       // Reset copy icon after 2 seconds
       setTimeout(() => setIsCopied(false), 2000);
     } catch (error) {
       console.error('Error copying markdown:', error);
-      toast({
-        title: "Error",
-        description: "Failed to copy markdown. Please try again.",
-        variant: "destructive"
-      });
     }
   };
 
@@ -221,26 +189,13 @@ Start with a level 1 heading for the section name:
       });
       saveAs(pdfBlob, `${formData.title || 'documentation'}.pdf`);
       
-      toast({
-        title: "Success",
-        description: "PDF document has been generated and downloaded.",
-      });
     } catch (error) {
       console.error('Error generating PDF document:', error);
-      toast({
-        title: "Error",
-        description: "Failed to generate PDF document. Please try again.",
-        variant: "destructive"
-      });
     }
   };
 
   const loadSampleData = () => {
     setFormData(sampleData);
-    toast({
-      title: "Sample Data Loaded",
-      description: "Example project details have been filled in.",
-    });
   };
 
   const sectionsList = formData.sections
@@ -411,9 +366,14 @@ Start with a level 1 heading for the section name:
 
       <LoadingModal
         isOpen={showLoadingModal}
-        sections={sectionsList}
+        onClose={() => setShowLoadingModal(false)}
         currentSection={currentSection}
         completedSections={completedSections}
+      />
+
+      <ApiKeyModal 
+        isOpen={showApiKeyModal}
+        onClose={() => setShowApiKeyModal(false)}
       />
     </div>
   );

@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import Button from '../components/ui/Button';
 import { useApiKey } from '../lib/ApiKeyContext';
-import { useToast } from '../components/ui/use-toast';
 import { Loader2, FileText, Download, Copy, Check } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -10,6 +9,7 @@ import { saveAs } from 'file-saver';
 import { generatePDF } from '../utils/pdfGenerator';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import SimpleLoadingModal from '../components/ui/SimpleLoadingModal';
+import ApiKeyModal from '../components/ui/ApiKeyModal';
 
 // Configure PDF.js worker to use the local worker file in the public directory
 pdfjs.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.js';
@@ -21,7 +21,7 @@ interface AnalysisResult {
 
 const LinkedInAnalyzer = () => {
   const { geminiKey } = useApiKey();
-  const { toast } = useToast();
+  const [showApiKeyModal, setShowApiKeyModal] = useState(false);
   const [file, setFile] = useState<File | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
@@ -36,11 +36,11 @@ const LinkedInAnalyzer = () => {
         setFile(selectedFile);
         setAnalysisResult(null);
       } else {
-        toast({
-          title: "Invalid File Type",
-          description: "Please upload a PDF file.",
-          variant: "destructive"
-        });
+        // toast({
+        //   title: "Invalid File Type",
+        //   description: "Please upload a PDF file.",
+        //   variant: "destructive"
+        // });
       }
     }
   };
@@ -434,11 +434,15 @@ Format your response with clear headings, bullet points, and a professional tone
   const handleAnalyzeResume = async () => {
     if (!file || !geminiKey) {
       setShowLoadingModal(false);
-      toast({
-        title: "Error",
-        description: file ? "Please set your Gemini API key first." : "Please upload a PDF file first.",
-        variant: "destructive"
-      });
+      if (!geminiKey) {
+        setShowApiKeyModal(true);
+      } else {
+        // toast({
+        //   title: "Error",
+        //   description: "Please upload a PDF file first.",
+        //   variant: "destructive"
+        // });
+      }
       return;
     }
 
@@ -475,10 +479,10 @@ Format your response with clear headings, bullet points, and a professional tone
         score: score
       });
       
-      toast({
-        title: "Analysis Complete",
-        description: "Resume has been analyzed successfully.",
-      });
+      // toast({
+      //   title: "Analysis Complete",
+      //   description: "Resume has been analyzed successfully.",
+      // });
     } catch (error) {
       console.error('Error analyzing resume:', error);
       setParsingProgress('');
@@ -494,11 +498,11 @@ Format your response with clear headings, bullet points, and a professional tone
         }
       }
       
-      toast({
-        title: "Analysis Failed",
-        description: errorMessage,
-        variant: "destructive"
-      });
+      // toast({
+      //   title: "Analysis Failed",
+      //   description: errorMessage,
+      //   variant: "destructive"
+      // });
     } finally {
       setIsLoading(false);
       setShowLoadingModal(false);
@@ -512,20 +516,20 @@ Format your response with clear headings, bullet points, and a professional tone
       await navigator.clipboard.writeText(analysisResult.content);
       setIsCopied(true);
       
-      toast({
-        title: "Copied!",
-        description: "Analysis has been copied to clipboard.",
-      });
+      // toast({
+      //   title: "Copied!",
+      //   description: "Analysis has been copied to clipboard.",
+      // });
       
       // Reset copy icon after 2 seconds
       setTimeout(() => setIsCopied(false), 2000);
     } catch (error) {
       console.error('Error copying analysis:', error);
-      toast({
-        title: "Error",
-        description: "Failed to copy analysis. Please try again.",
-        variant: "destructive"
-      });
+      // toast({
+      //   title: "Error",
+      //   description: "Failed to copy analysis. Please try again.",
+      //   variant: "destructive"
+      // });
     }
   };
 
@@ -541,17 +545,17 @@ Format your response with clear headings, bullet points, and a professional tone
       
       saveAs(pdfBlob, 'resume-analysis.pdf');
       
-      toast({
-        title: "Success",
-        description: "Analysis PDF has been downloaded.",
-      });
+      // toast({
+      //   title: "Success",
+      //   description: "Analysis PDF has been downloaded.",
+      // });
     } catch (error) {
       console.error('Error generating PDF:', error);
-      toast({
-        title: "Error",
-        description: "Failed to generate PDF. Please try again.",
-        variant: "destructive"
-      });
+      // toast({
+      //   title: "Error",
+      //   description: "Failed to generate PDF. Please try again.",
+      //   variant: "destructive"
+      // });
     }
   };
 
@@ -560,6 +564,11 @@ Format your response with clear headings, bullet points, and a professional tone
       <SimpleLoadingModal 
         isOpen={showLoadingModal}
         message="Analyzing your resume... This may take a few moments."
+      />
+
+      <ApiKeyModal 
+        isOpen={showApiKeyModal}
+        onClose={() => setShowApiKeyModal(false)}
       />
       <div className="flex items-center justify-between mb-8">
         <div>

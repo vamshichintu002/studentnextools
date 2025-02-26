@@ -7,6 +7,7 @@ import { useAuth } from '../lib/AuthContext';
 import { useApiKey } from '../lib/ApiKeyContext';
 import SimpleLoadingModal from '../components/ui/SimpleLoadingModal';
 import SummaryModal from '../components/ui/SummaryModal';
+import ApiKeyModal from '../components/ui/ApiKeyModal';
 
 const LinkedInSummary = () => {
   const { user } = useAuth();
@@ -26,6 +27,7 @@ const LinkedInSummary = () => {
   const [error, setError] = useState('');
   const [showLoadingModal, setShowLoadingModal] = useState(false);
   const [showSummaryModal, setShowSummaryModal] = useState(false);
+  const [showApiKeyModal, setShowApiKeyModal] = useState(false);
 
   const generatePrompt = (data: typeof formData) => {
     return `Write a LinkedIn summary with these details:
@@ -52,7 +54,7 @@ Requirements:
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!geminiKey) {
-      setError('Please add your Gemini API key in the Dashboard settings before generating content.');
+      setShowApiKeyModal(true);
       return;
     }
 
@@ -98,11 +100,16 @@ Requirements:
         isOpen={showLoadingModal}
         message="Generating your LinkedIn summary... This may take a few moments."
       />
-      
+
       <SummaryModal
         isOpen={showSummaryModal}
         onClose={() => setShowSummaryModal(false)}
         content={generatedSummary}
+      />
+
+      <ApiKeyModal 
+        isOpen={showApiKeyModal}
+        onClose={() => setShowApiKeyModal(false)}
       />
 
       <div className="flex justify-between items-center mb-8">
