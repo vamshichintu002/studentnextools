@@ -27,7 +27,7 @@ const DashboardCard = ({ title, description, icon: Icon, path }: DashboardCardPr
 
   return (
     <>
-      <div className="block p-3 bg-white rounded-xl shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
+      <div className="block p-3 bg-white rounded-xl shadow-sm border border-gray-200 hover:shadow-md transition-shadow h-full flex flex-col">
         <div className="flex items-center gap-2 mb-3">
           <div className="p-2 bg-gray-100 rounded-lg">
             <Icon className="w-6 h-6" />
@@ -37,11 +37,13 @@ const DashboardCard = ({ title, description, icon: Icon, path }: DashboardCardPr
             <p className="text-gray-600 mt-1">{description}</p>
           </div>
         </div>
-        <button onClick={handleClick} className="w-full">
-          <RainbowButton className="w-full text-white hover:text-white">
-            Launch Tool
-          </RainbowButton>
-        </button>
+        <div className="mt-auto pt-4">
+          <button onClick={handleClick} className="w-full">
+            <RainbowButton className="w-full text-white hover:text-white">
+              Launch Tool
+            </RainbowButton>
+          </button>
+        </div>
       </div>
 
       <LoginModal 

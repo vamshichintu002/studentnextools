@@ -25,6 +25,7 @@ export default {
         "accordion-up": "accordion-up 0.2s ease-out",
         "collapsible-down": "collapsible-down 0.2s ease-out",
         "collapsible-up": "collapsible-up 0.2s ease-out",
+        "shine": "shine 2s ease-in-out infinite",
       },
       keyframes: {
         rainbow: {
@@ -46,6 +47,10 @@ export default {
         "collapsible-up": {
           from: { height: "var(--radix-collapsible-content-height)" },
           to: { height: "0" },
+        },
+        shine: {
+          "0%": { "background-position": "-200%" },
+          "100%": { "background-position": "200%" },
         },
       },
     },

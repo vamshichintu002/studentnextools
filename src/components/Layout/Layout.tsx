@@ -39,7 +39,7 @@ const Layout = ({ children }: LayoutProps) => {
       <div className="flex-1 flex flex-col min-h-screen overflow-x-hidden">
         {/* Mobile header */}
         <div className="sticky top-0 lg:hidden flex items-center justify-between p-4 bg-white border-b z-30">
-          <h1 className="text-xl font-bold">Student Nest</h1>
+          <img src="/assets/navlogo.png" alt="Student Nest" className="h-8 w-auto" />
           <button
             onClick={() => setIsSidebarOpen(true)}
             className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
