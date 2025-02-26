@@ -9,6 +9,7 @@ import LinkedInAnalyzer from './pages/LinkedInAnalyzer';
 import LinkedInSummary from './pages/LinkedInSummary';
 import GitHubProfile from './pages/GitHubProfile';
 import NotesWriter from './pages/NotesWriter';
+import Projects from './pages/Projects';
 import Profile from './pages/Profile';
 import LoginModal from './components/ui/LoginModal';
 import { Toaster } from './components/ui/toaster';
@@ -72,6 +73,14 @@ function AppContent() {
             element={
               <ProtectedRoute>
                 <NotesWriter />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/projects"
+            element={
+              <ProtectedRoute>
+                <Projects />
               </ProtectedRoute>
             }
           />
