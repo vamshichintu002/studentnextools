@@ -1,18 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { useApiKey } from '../lib/ApiKeyContext';
 import { useSessionStorage } from '../lib/useSessionStorage';
 import Input from '../components/ui/Input';
 import TextArea from '../components/ui/TextArea';
 import Button from '../components/ui/Button';
-import { Loader2, FileText, Download, Copy, Check } from 'lucide-react';
+import { Loader2, FileText, ExternalLink, Check } from 'lucide-react';
 import LoadingModal from '../components/ui/LoadingModal';
 import ApiKeyModal from '../components/ui/ApiKeyModal';
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
-import { generateWordDocument } from '../utils/wordGenerator';
-import { generatePDF } from '../utils/pdfGenerator';
-import { saveAs } from 'file-saver';
 import { useToast } from '../components/ui/use-toast';
 
 interface FormData {
@@ -36,7 +31,12 @@ const DocMaker = () => {
   const { geminiKey } = useApiKey();
   const { toast } = useToast();
   const [showApiKeyModal, setShowApiKeyModal] = useState(false);
-  
+  const [isLoading, setIsLoading] = useState(false);
+  const [currentSection, setCurrentSection] = useState<string | null>(null);
+  const [completedSections, setCompletedSections] = useState<string[]>([]);
+  const [showLoadingModal, setShowLoadingModal] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+
   // Use sessionStorage for form data
   const [formData, setFormData] = useSessionStorage<FormData>('docmaker-form', {
     title: '',
@@ -46,11 +46,6 @@ const DocMaker = () => {
   
   // Use sessionStorage for generated content
   const [generatedSections, setGeneratedSections] = useSessionStorage<GeneratedSection[]>('docmaker-generated', []);
-  const [isLoading, setIsLoading] = useState(false);
-  const [currentSection, setCurrentSection] = useState<string | null>(null);
-  const [completedSections, setCompletedSections] = useState<string[]>([]);
-  const [showLoadingModal, setShowLoadingModal] = useState(false);
-  const [isCopied, setIsCopied] = useState(false);
 
   const generateSectionPrompt = (section: string, context: { title: string; description: string }) => {
     return `Generate comprehensive content for the "${section}" section of a project documentation.
@@ -136,7 +131,17 @@ Start with a level 1 heading for the section name:
         } catch (error) {
           console.error('Error generating section:', error);
           setShowLoadingModal(false);
-          if (error.message?.includes('API key')) {
+          // Use a type guard to safely access error properties
+          let errorMessage = '';
+          if (error instanceof Error) {
+            errorMessage = error.message;
+          } else if (typeof error === 'object' && error !== null && 'message' in error) {
+            errorMessage = String((error as { message: unknown }).message);
+          } else {
+            errorMessage = String(error);
+          }
+          
+          if (errorMessage.includes('API key')) {
             toast({
               title: "Invalid API Key",
               description: "Please check your Gemini API key and try again.",
@@ -145,8 +150,8 @@ Start with a level 1 heading for the section name:
             setShowApiKeyModal(true);
           } else {
             toast({
-              title: "Error",
-              description: "Failed to generate section. Please try again.",
+              title: "Generation Failed",
+              description: "Failed to generate documentation. Please try again.",
               variant: "destructive"
             });
           }
@@ -158,12 +163,17 @@ Start with a level 1 heading for the section name:
       await new Promise(resolve => setTimeout(resolve, 1000));
       setCurrentSection(null);
       setShowLoadingModal(false);
+      
+      // Show success modal
+      setShowSuccessModal(true);
 
     } catch (error) {
       console.error('Error generating documentation:', error);
       setShowLoadingModal(false);
     } finally {
       setIsLoading(false);
+      setShowLoadingModal(false);
+      setCurrentSection(null);
     }
   };
 
@@ -175,49 +185,17 @@ Start with a level 1 heading for the section name:
     }`;
   };
 
-  const handleDownloadWord = async () => {
-    try {
-      // Generate full markdown content
-      const markdownContent = generateMarkdownContent();
-      
-      // Convert markdown to Word
-      await generateWordDocument({
-        title: formData.title,
-        description: formData.description,
-        content: markdownContent,
-        sections: generatedSections
-      });
-      
-    } catch (error) {
-      console.error('Error generating Word document:', error);
-    }
-  };
-
   const handleCopyMarkdown = async () => {
     try {
       const markdownContent = generateMarkdownContent();
       await navigator.clipboard.writeText(markdownContent);
       
-      setIsCopied(true);
-
-      // Reset copy icon after 2 seconds
-      setTimeout(() => setIsCopied(false), 2000);
+      toast({
+        title: "Copied to clipboard",
+        description: "Document content has been copied to clipboard.",
+      });
     } catch (error) {
       console.error('Error copying markdown:', error);
-    }
-  };
-
-  const handleDownloadPDF = async () => {
-    try {
-      const pdfBlob = await generatePDF({
-        title: formData.title || 'Documentation',
-        description: formData.description || '',
-        content: generateMarkdownContent()
-      });
-      saveAs(pdfBlob, `${formData.title || 'documentation'}.pdf`);
-      
-    } catch (error) {
-      console.error('Error generating PDF document:', error);
     }
   };
 
@@ -230,6 +208,367 @@ Start with a level 1 heading for the section name:
     .map(section => section.trim())
     .filter(section => section.length > 0);
 
+  // Add a new function to open preview in a new tab
+  const handlePreviewInNewTab = () => {
+    const newWindow = window.open('', '_blank');
+    if (newWindow) {
+      newWindow.document.write(`
+        <html>
+          <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+            <title>${formData.title || 'Documentation Preview'}</title>
+            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.2.0/github-markdown.min.css">
+            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+            <style>
+              body {
+                background-color: #ffffff;
+                margin: 0;
+                padding: 0;
+                color: #24292e;
+                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+                line-height: 1.6;
+              }
+              .control-bar {
+                position: sticky;
+                top: 0;
+                background-color: #f6f8fa;
+                border-bottom: 1px solid #e1e4e8;
+                padding: 12px 16px;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                z-index: 100;
+                box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+              }
+              .instruction {
+                font-size: 14px;
+                color: #57606a;
+                margin-right: 10px;
+              }
+              .buttons {
+                display: flex;
+                gap: 8px;
+              }
+              .btn {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                gap: 6px;
+                background-color: #ffffff;
+                border: 1px solid #d1d5da;
+                border-radius: 6px;
+                padding: 6px 12px;
+                font-size: 14px;
+                font-weight: 500;
+                color: #24292e;
+                cursor: pointer;
+                transition: all 0.2s;
+              }
+              .btn:hover {
+                background-color: #f3f4f6;
+              }
+              .btn i {
+                font-size: 14px;
+              }
+              .btn-success {
+                background-color: #2ea44f;
+                color: white;
+                border-color: #2ea44f;
+              }
+              .btn-success:hover {
+                background-color: #2c974b;
+              }
+              .markdown-body {
+                box-sizing: border-box;
+                min-width: 200px;
+                max-width: 980px;
+                margin: 0 auto;
+                padding: 45px;
+                background-color: #ffffff;
+                color: #24292e;
+                border: 1px solid #e1e4e8;
+                border-radius: 6px;
+                margin-top: 20px;
+                margin-bottom: 40px;
+              }
+              .markdown-body h1, 
+              .markdown-body h2, 
+              .markdown-body h3, 
+              .markdown-body h4, 
+              .markdown-body h5, 
+              .markdown-body h6,
+              .markdown-body p,
+              .markdown-body li,
+              .markdown-body a,
+              .markdown-body code,
+              .markdown-body blockquote {
+                color: #24292e;
+              }
+              .markdown-body pre {
+                background-color: #f6f8fa;
+              }
+              .markdown-body code {
+                background-color: #f6f8fa;
+                color: #24292e;
+                word-wrap: break-word;
+                white-space: pre-wrap;
+              }
+              .markdown-body table {
+                border-collapse: collapse;
+                display: block;
+                width: 100%;
+                overflow-x: auto;
+              }
+              .markdown-body table th,
+              .markdown-body table td {
+                border: 1px solid #e1e4e8;
+                padding: 6px 13px;
+              }
+              .markdown-body table tr {
+                background-color: #ffffff;
+                border-top: 1px solid #e1e4e8;
+              }
+              .markdown-body table tr:nth-child(2n) {
+                background-color: #f6f8fa;
+              }
+              .markdown-body img {
+                max-width: 100%;
+                height: auto;
+                display: block;
+                margin: 1rem auto;
+              }
+              .markdown-body blockquote {
+                border-left: 4px solid #dfe2e5;
+                padding: 0 1em;
+                color: #6a737d;
+              }
+              @media (max-width: 767px) {
+                .markdown-body {
+                  padding: 20px;
+                  margin: 10px;
+                  border-radius: 4px;
+                  font-size: 16px;
+                  width: auto;
+                }
+                .markdown-body h1 {
+                  font-size: 1.8rem;
+                  word-break: break-word;
+                }
+                .markdown-body h2 {
+                  font-size: 1.5rem;
+                }
+                .markdown-body h3 {
+                  font-size: 1.3rem;
+                }
+                .markdown-body pre {
+                  padding: 12px;
+                  border-radius: 4px;
+                }
+                .control-bar {
+                  padding: 10px;
+                  flex-direction: column;
+                  align-items: flex-start;
+                }
+                .instruction {
+                  font-size: 13px;
+                  margin-bottom: 10px;
+                  width: 100%;
+                }
+                .buttons {
+                  width: 100%;
+                  justify-content: space-between;
+                }
+                .btn {
+                  padding: 8px 12px;
+                  font-size: 14px;
+                  flex: 1;
+                  justify-content: center;
+                }
+                .btn i {
+                  margin-right: 4px;
+                }
+              }
+              /* Override any dark mode settings */
+              html, body {
+                background-color: #ffffff !important;
+                color: #24292e !important;
+              }
+              /* Hide control bar when printing */
+              @media print {
+                .control-bar {
+                  display: none !important;
+                }
+                .markdown-body {
+                  margin-top: 0;
+                  padding-top: 0;
+                  border: none;
+                  max-width: 100%;
+                }
+                body {
+                  background-color: white;
+                  -webkit-print-color-adjust: exact;
+                  print-color-adjust: exact;
+                }
+              }
+            </style>
+          </head>
+          <body>
+            <div class="control-bar">
+              <div class="instruction">
+                <i class="fas fa-info-circle"></i> Copy and paste this in Google Docs or Word to preserve formatting. Google Docs is recommended.
+              </div>
+              <div class="buttons">
+                <button id="copyBtn" class="btn">
+                  <i class="fas fa-copy"></i> Copy
+                </button>
+                <button id="printBtn" class="btn">
+                  <i class="fas fa-download"></i> Download
+                </button>
+              </div>
+            </div>
+            <div class="markdown-body">
+              <div id="content"></div>
+            </div>
+            <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+            <script>
+              // Parse and render markdown
+              marked.setOptions({
+                breaks: true,
+                gfm: true
+              });
+              const markdownContent = ${JSON.stringify(generateMarkdownContent())};
+              document.getElementById('content').innerHTML = marked.parse(markdownContent);
+              
+              // Copy button functionality - copy the rendered HTML content
+              document.getElementById('copyBtn').addEventListener('click', async () => {
+                try {
+                  // Get the rendered HTML content
+                  const contentElement = document.querySelector('.markdown-body');
+                  
+                  // Create a range and selection
+                  const range = document.createRange();
+                  range.selectNode(contentElement);
+                  
+                  // Select the content
+                  const selection = window.getSelection();
+                  selection.removeAllRanges();
+                  selection.addRange(range);
+                  
+                  // Execute copy command
+                  document.execCommand('copy');
+                  
+                  // Clear selection
+                  selection.removeAllRanges();
+                  
+                  // Update button to show success
+                  const btn = document.getElementById('copyBtn');
+                  btn.innerHTML = '<i class="fas fa-check"></i> Copied!';
+                  btn.classList.add('btn-success');
+                  setTimeout(() => {
+                    btn.innerHTML = '<i class="fas fa-copy"></i> Copy';
+                    btn.classList.remove('btn-success');
+                  }, 2000);
+                } catch (err) {
+                  console.error('Failed to copy content:', err);
+                }
+              });
+              
+              // Print button functionality (renamed to Download but keeps print functionality)
+              document.getElementById('printBtn').addEventListener('click', () => {
+                window.print();
+              });
+            </script>
+          </body>
+        </html>
+      `);
+      newWindow.document.close();
+    }
+  };
+
+  // Success Modal Component
+  const SuccessModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) => {
+    useEffect(() => {
+      if (isOpen) {
+        // Load and trigger confetti when modal opens
+        const script = document.createElement('script');
+        script.src = 'https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js';
+        script.async = true;
+        script.onload = () => {
+          const confetti = (window as any).confetti;
+          
+          // Initial burst of confetti
+          confetti({
+            particleCount: 100,
+            spread: 70,
+            origin: { y: 0.6 }
+          });
+          
+          // Followed by a cannon from both sides
+          setTimeout(() => {
+            confetti({
+              particleCount: 50,
+              angle: 60,
+              spread: 55,
+              origin: { x: 0 }
+            });
+            
+            confetti({
+              particleCount: 50,
+              angle: 120,
+              spread: 55,
+              origin: { x: 1 }
+            });
+          }, 250);
+        };
+        document.body.appendChild(script);
+        
+        return () => {
+          // Clean up script when modal closes
+          if (document.body.contains(script)) {
+            document.body.removeChild(script);
+          }
+        };
+      }
+    }, [isOpen]);
+    
+    if (!isOpen) return null;
+    
+    return (
+      <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+        <div className="bg-white rounded-xl p-6 w-full max-w-md mx-auto">
+          <div className="flex flex-col items-center text-center">
+            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
+              <Check className="w-8 h-8 text-green-600" />
+            </div>
+            <h2 className="text-xl font-semibold mb-2">Document Generated!</h2>
+            <p className="text-gray-600 mb-6">
+              Your document has been successfully generated with {generatedSections.length} sections.
+            </p>
+            <div className="flex flex-col w-full gap-3">
+              <Button 
+                onClick={() => {
+                  handlePreviewInNewTab();
+                  onClose();
+                }}
+                className="flex items-center justify-center gap-2"
+              >
+                <ExternalLink className="w-4 h-4" />
+                View/Download Document
+              </Button>
+              <button
+                onClick={onClose}
+                className="text-gray-500 hover:text-gray-700 text-sm mt-2"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
       <div className="flex items-center justify-between mb-8">
@@ -240,7 +579,7 @@ Start with a level 1 heading for the section name:
         <Button
           onClick={loadSampleData}
           type="button"
-          variant="outline"
+          variant="secondary"
           className="flex items-center gap-2"
         >
           <FileText className="w-4 h-4" />
@@ -283,117 +622,9 @@ Start with a level 1 heading for the section name:
         </Button>
       </form>
 
-      {/* Generated Content Preview */}
-      {generatedSections.length > 0 && (
-        <div className="space-y-6">
-          {/* Action Buttons */}
-          <div className="flex gap-4">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={handleCopyMarkdown}
-              className="flex items-center gap-2"
-            >
-              {isCopied ? (
-                <Check className="w-4 h-4 text-green-500" />
-              ) : (
-                <Copy className="w-4 h-4" />
-              )}
-              {isCopied ? 'Copied!' : 'Copy MD'}
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={handleDownloadWord}
-              className="flex items-center gap-2"
-            >
-              <Download className="w-4 h-4" />
-              Download Word
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={handleDownloadPDF}
-              className="flex items-center gap-2"
-            >
-              <Download className="w-4 h-4" />
-              Download PDF
-            </Button>
-          </div>
-
-          {/* Preview Content */}
-          <div className="space-y-12 overflow-auto max-h-[800px] pr-6 py-4">
-            {generatedSections.map((section, index) => (
-              <div 
-                key={index} 
-                className="relative"
-              >
-                {/* Background pages effect */}
-                <div className="absolute -bottom-2 -right-2 w-full h-full bg-gray-100 rounded-lg transform rotate-1" />
-                <div className="absolute -bottom-1 -right-1 w-full h-full bg-gray-50 rounded-lg transform rotate-0.5" />
-                
-                {/* Main content page */}
-                <div 
-                  className="relative bg-white rounded-lg p-8"
-                  style={{
-                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)'
-                  }}
-                >
-                  <div className="prose prose-sm max-w-none">
-                    <ReactMarkdown 
-                      remarkPlugins={[remarkGfm]}
-                      components={{
-                        h1: ({ node, ...props }) => (
-                          <div className="text-center mb-8 pb-4 border-b">
-                            <h1 className="text-3xl font-bold" {...props} />
-                          </div>
-                        ),
-                        h2: ({ node, ...props }) => <h2 className="text-2xl font-semibold mb-4 text-gray-800" {...props} />,
-                        h3: ({ node, ...props }) => <h3 className="text-xl font-semibold mb-3 text-gray-700" {...props} />,
-                        p: ({ node, ...props }) => <p className="mb-4 text-gray-600 leading-relaxed" {...props} />,
-                        ul: ({ node, ...props }) => <ul className="list-disc pl-6 mb-4 text-gray-600" {...props} />,
-                        ol: ({ node, ...props }) => <ol className="list-decimal pl-6 mb-4 text-gray-600" {...props} />,
-                        blockquote: ({ node, ...props }) => (
-                          <blockquote className="border-l-4 border-blue-500 pl-4 italic my-4 text-gray-600" {...props} />
-                        ),
-                        code: ({ node, inline, ...props }) => (
-                          inline ? 
-                            <code className="bg-gray-100 rounded px-1 text-sm font-mono" {...props} /> :
-                            <pre className="bg-gray-100 rounded-lg p-4 overflow-auto my-4">
-                              <code className="text-sm font-mono" {...props} />
-                            </pre>
-                        ),
-                        table: ({ node, ...props }) => (
-                          <div className="overflow-x-auto my-4 rounded-lg border border-gray-200">
-                            <table className="min-w-full divide-y divide-gray-200" {...props} />
-                          </div>
-                        ),
-                        th: ({ node, ...props }) => (
-                          <th className="px-4 py-3 bg-gray-50 text-left text-sm font-medium text-gray-600" {...props} />
-                        ),
-                        td: ({ node, ...props }) => (
-                          <td className="px-4 py-3 text-sm text-gray-500 border-t border-gray-200" {...props} />
-                        ),
-                      }}
-                    >
-                      {section.content}
-                    </ReactMarkdown>
-                  </div>
-
-                  {/* Page number */}
-                  <div className="absolute bottom-4 right-4 text-sm text-gray-400">
-                    Page {index + 1}
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
+      {/* Modals */}
       <LoadingModal
         isOpen={showLoadingModal}
-        onClose={() => setShowLoadingModal(false)}
         currentSection={currentSection}
         completedSections={completedSections}
         sections={sectionsList}
@@ -402,6 +633,11 @@ Start with a level 1 heading for the section name:
       <ApiKeyModal 
         isOpen={showApiKeyModal}
         onClose={() => setShowApiKeyModal(false)}
+      />
+
+      <SuccessModal
+        isOpen={showSuccessModal}
+        onClose={() => setShowSuccessModal(false)}
       />
     </div>
   );
