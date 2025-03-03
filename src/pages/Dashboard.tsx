@@ -7,6 +7,7 @@ import {
   MessageSquare, 
   Github, 
   BookOpen,
+  Globe,
 } from 'lucide-react';
 
 const Dashboard = () => {
@@ -42,6 +43,12 @@ const Dashboard = () => {
       description: 'Organize your study notes efficiently',
       path: '/notes-writer',
       icon: BookOpen,
+    },
+    {
+      title: 'Website GPT',
+      description: 'Ask questions about any website using AI',
+      path: '/website-gpt',
+      icon: Globe,
     },
   ];
 

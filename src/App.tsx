@@ -11,6 +11,7 @@ import GitHubProfile from './pages/GitHubProfile';
 import NotesWriter from './pages/NotesWriter';
 import Projects from './pages/Projects';
 import Profile from './pages/Profile';
+import WebsiteGPT from './pages/WebsiteGPT';
 import LoginModal from './components/ui/LoginModal';
 import { Toaster } from './components/ui/toaster';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -81,6 +82,14 @@ function AppContent() {
             element={
               <ProtectedRoute>
                 <Projects />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/website-gpt"
+            element={
+              <ProtectedRoute>
+                <WebsiteGPT />
               </ProtectedRoute>
             }
           />
