@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Menu, Home, FileText, Linkedin, Github, BookOpen, X, User, Video, ChevronDown, ChevronUp, Bot, Lightbulb } from 'lucide-react';
+import { Menu, Home, FileText, Linkedin, Github, BookOpen, X, User, Video, ChevronDown, ChevronUp, Bot, Lightbulb, Globe } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../lib/AuthContext';
 import ProfileMenu from '../ui/ProfileMenu';
@@ -25,6 +25,7 @@ const Sidebar = ({ onClose }: SidebarProps) => {
     { name: 'LinkedIn Summary', icon: Linkedin, path: '/linkedin-summary' },
     { name: 'GitHub Profile', icon: Github, path: '/github-profile' },
     { name: 'Notes Writer', icon: BookOpen, path: '/notes-writer' },
+    { name: 'Website GPT', icon: Globe, path: '/website-gpt' },
   ];
 
   const handleNavClick = (path: string) => {
