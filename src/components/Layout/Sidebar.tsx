@@ -20,7 +20,7 @@ const Sidebar = ({ onClose }: SidebarProps) => {
   ];
 
   const aiTools = [
-    { name: 'Project DOC Maker', icon: FileText, path: '/doc-maker' },
+    { name: 'Project DOC Writer', icon: FileText, path: '/doc-maker' },
     { name: 'LinkedIn Analyzer', icon: Linkedin, path: '/linkedin-analyzer' },
     { name: 'LinkedIn Summary', icon: Linkedin, path: '/linkedin-summary' },
     { name: 'GitHub Profile', icon: Github, path: '/github-profile' },

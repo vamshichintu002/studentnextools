@@ -15,7 +15,7 @@ const Dashboard = () => {
 
   const tools = [
     {
-      title: 'Project DOC Maker',
+      title: 'Project DOC Writer',
       description: 'Create professional project documentation easily',
       path: '/doc-maker',
       icon: FileText,

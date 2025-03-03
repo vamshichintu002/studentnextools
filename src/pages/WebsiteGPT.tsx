@@ -96,6 +96,12 @@ const URLInputModal = ({ isOpen, onClose, onSubmit }: { isOpen: boolean; onClose
   );
 };
 
+interface Message {
+  type: 'user' | 'ai';
+  content: string;
+  isStreaming?: boolean;
+}
+
 const WebsiteGPT = () => {
   const [url, setUrl] = useState('');
   const [query, setQuery] = useState('');
@@ -107,7 +113,7 @@ const WebsiteGPT = () => {
   const [showApiKeyModal, setShowApiKeyModal] = useState(false);
   const [showLoadingModal, setShowLoadingModal] = useState(false);
   const [showUrlModal, setShowUrlModal] = useState(true);
-  const [messages, setMessages] = useState<Array<{ type: 'user' | 'ai'; content: string; isStreaming?: boolean }>>([]);
+  const [messages, setMessages] = useState<Message[]>([]);
 
   const placeholders = [
     "What is this website about?",
@@ -277,6 +283,7 @@ Answer (in markdown format):`;
 
   return (
     <>
+      {/* Modals */}
       <URLInputModal 
         isOpen={showUrlModal} 
         onClose={() => setShowUrlModal(false)}
@@ -293,17 +300,37 @@ Answer (in markdown format):`;
         onClose={() => setShowApiKeyModal(false)}
       />
 
-      <div className="flex h-screen bg-gray-50">
+      {/* Mobile Menu Button - Only visible on small screens */}
+      <button
+        onClick={() => setIsSidebarExpanded(!isSidebarExpanded)}
+        className="fixed top-4 left-4 z-30 md:hidden bg-white p-2 rounded-lg shadow-sm hover:bg-gray-100 transition-colors"
+      >
+        <MessageSquare className="h-5 w-5 text-gray-600" />
+      </button>
+
+      <div className="flex h-screen bg-gray-50 relative">
+        {/* Overlay for mobile when sidebar is open */}
+        {isSidebarExpanded && (
+          <div 
+            className="fixed inset-0 bg-black/20 z-20 md:hidden"
+            onClick={() => setIsSidebarExpanded(false)}
+          />
+        )}
+
         {/* Collapsible Sidebar */}
         <div 
-          className={`${
-            isSidebarExpanded ? 'w-[280px]' : 'w-[60px]'
-          } bg-white border-r shadow-sm p-3 flex flex-col transition-all duration-300`}
+          className={`
+            fixed md:relative z-30 h-full
+            ${isSidebarExpanded ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
+            ${isSidebarExpanded ? 'w-[280px]' : 'w-[60px]'}
+            bg-white border-r shadow-sm p-3 flex flex-col
+            transition-all duration-300
+          `}
         >
-          {/* Toggle Button */}
+          {/* Toggle Button - Only visible on desktop */}
           <button
             onClick={() => setIsSidebarExpanded(!isSidebarExpanded)}
-            className="mb-4 p-2 hover:bg-gray-100 rounded-lg transition-colors self-end"
+            className="hidden md:block mb-4 p-2 hover:bg-gray-100 rounded-lg transition-colors self-end"
           >
             <MessageSquare className="h-4 w-4 text-gray-500" />
           </button>
@@ -311,9 +338,11 @@ Answer (in markdown format):`;
           {/* New Chat Button */}
           <Button
             onClick={() => setShowUrlModal(true)}
-            className={`${
-              isSidebarExpanded ? 'w-full' : 'w-10 px-0'
-            } bg-blue-600 hover:bg-blue-700 text-white mb-4 gap-2 h-10 flex items-center justify-center transition-all duration-300`}
+            className={`
+              ${isSidebarExpanded ? 'w-full' : 'w-10 px-0'}
+              bg-black hover:bg-gray-900 text-white mb-4 gap-2 h-10
+              flex items-center justify-center transition-all duration-300
+            `}
             title="New Website"
           >
             <Plus className="h-4 w-4" />
@@ -325,9 +354,11 @@ Answer (in markdown format):`;
             {url && (
               <button
                 onClick={() => {}}
-                className={`w-full flex items-center gap-2 px-3 py-3 text-sm rounded-lg hover:bg-gray-100 text-gray-700 mb-1 transition-colors ${
-                  isSidebarExpanded ? '' : 'justify-center'
-                }`}
+                className={`
+                  w-full flex items-center gap-2 px-3 py-3 text-sm rounded-lg
+                  hover:bg-gray-100 text-gray-700 mb-1 transition-colors
+                  ${isSidebarExpanded ? '' : 'justify-center'}
+                `}
                 title={url}
               >
                 <MessageSquare className="h-4 w-4 text-gray-500 flex-shrink-0" />
@@ -341,13 +372,13 @@ Answer (in markdown format):`;
         <div className="flex-1 flex flex-col relative bg-white">
           {messages.length === 0 ? (
             <div className="flex-1 flex flex-col justify-center items-center px-4">
-              <div className="flex items-center gap-4 mb-8">
-                <Globe className="h-16 w-16 text-blue-600" />
-                <h1 className="text-5xl font-bold bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent">
+              <div className="flex flex-col md:flex-row items-center gap-4 mb-8 text-center">
+                <Globe className="h-12 w-12 md:h-16 md:w-16 text-black" />
+                <h1 className="text-3xl md:text-5xl font-bold bg-gradient-to-r from-gray-900 via-gray-600 to-gray-900 bg-[length:200%_auto] animate-shine bg-clip-text text-transparent">
                   WebsiteGPT
                 </h1>
               </div>
-              <p className="text-gray-600 text-center max-w-xl mb-12 text-lg">
+              <p className="text-gray-800 text-center max-w-xl mb-8 md:mb-12 text-base md:text-lg px-4">
                 Ask questions about any website and get instant answers powered by AI
               </p>
               <div className="w-full max-w-2xl px-4">
@@ -361,55 +392,69 @@ Answer (in markdown format):`;
           ) : (
             <>
               {/* Messages */}
-              <div className="flex-1 overflow-y-auto">
-                {messages.map((message, index) => (
+              <div className="flex-1 overflow-y-auto pt-16 md:pt-0 px-4 md:px-6">
+                {messages.map((message: Message, index) => (
                   <div 
                     key={index} 
-                    className={`py-6 ${
-                      message.type === 'user' ? 'bg-white' : 'bg-gray-50'
+                    className={`py-2 md:py-3 flex ${
+                      message.type === 'user' ? 'justify-end' : 'justify-start'
                     }`}
                   >
-                    <div className="max-w-3xl mx-auto px-6">
-                      <div className="flex items-start gap-4 group">
-                        <div className={`w-8 h-8 rounded-full flex items-center justify-center shadow-sm ${
-                          message.type === 'user' 
-                            ? 'bg-blue-600 text-white' 
-                            : 'bg-white border border-gray-200 text-blue-600'
-                        }`}>
-                          {message.type === 'user' ? 'U' : 'AI'}
-                        </div>
-                        <div className="flex-1">
-                          {message.type === 'user' ? (
-                            <p className="text-gray-700 whitespace-pre-wrap leading-relaxed">
-                              {message.content}
-                            </p>
-                          ) : (
-                            <div className="prose prose-sm max-w-none prose-headings:mt-2 prose-headings:mb-1 prose-p:mt-1 prose-p:mb-1 prose-ul:mt-1 prose-ul:mb-1 prose-li:mt-0.5 prose-li:mb-0.5 prose-pre:bg-gray-100 prose-pre:p-3 prose-pre:rounded-lg">
-                              <ReactMarkdown
-                                remarkPlugins={[remarkGfm]}
-                                components={{
-                                  p: ({node, ...props}) => <p className="text-gray-700 leading-relaxed" {...props} />,
-                                  a: ({node, ...props}) => <a className="text-blue-600 hover:underline" {...props} />,
-                                  ul: ({node, ...props}) => <ul className="list-disc pl-4" {...props} />,
-                                  ol: ({node, ...props}) => <ol className="list-decimal pl-4" {...props} />,
-                                  li: ({node, ...props}) => <li className="text-gray-700" {...props} />,
-                                  h1: ({node, ...props}) => <h1 className="text-xl font-bold text-gray-900" {...props} />,
-                                  h2: ({node, ...props}) => <h2 className="text-lg font-bold text-gray-900" {...props} />,
-                                  h3: ({node, ...props}) => <h3 className="text-base font-bold text-gray-900" {...props} />,
-                                  code: ({node, ...props}) => <code className="bg-gray-100 px-1.5 py-0.5 rounded text-sm" {...props} />,
-                                  pre: ({node, ...props}) => <pre className="bg-gray-100 p-3 rounded-lg overflow-x-auto" {...props} />
-                                }}
-                              >
-                                {message.content + (message.isStreaming ? '▋' : '')}
-                              </ReactMarkdown>
-                            </div>
-                          )}
-                        </div>
-                        {!message.isStreaming && (
+                    <div className={`flex items-start gap-3 md:gap-4 group max-w-[85%] md:max-w-[75%] ${
+                      message.type === 'user' ? 'flex-row-reverse' : ''
+                    }`}>
+                      <div className={`w-6 h-6 md:w-8 md:h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
+                        message.type === 'user' 
+                          ? 'bg-black text-white' 
+                          : 'bg-gray-200 text-gray-700'
+                      }`}>
+                        {message.type === 'user' ? 'U' : 'AI'}
+                      </div>
+                      <div className={`relative rounded-2xl px-4 py-2 md:px-5 md:py-3 ${
+                        message.type === 'user' 
+                          ? 'bg-black text-white' 
+                          : 'bg-gray-100 text-gray-700'
+                      }`}>
+                        {message.type === 'user' ? (
+                          <p className="whitespace-pre-wrap leading-relaxed text-sm md:text-base">
+                            {message.content}
+                          </p>
+                        ) : (
+                          <div className={`prose prose-sm md:prose-base max-w-none ${
+                            message.type === 'user' 
+                              ? 'prose-invert' 
+                              : 'prose-headings:text-gray-900 prose-a:text-blue-600'
+                          }`}>
+                            <ReactMarkdown
+                              remarkPlugins={[remarkGfm]}
+                              components={{
+                                p: ({children, ...props}) => <p className="leading-relaxed text-sm md:text-base m-0" {...props}>{children}</p>,
+                                a: ({children, ...props}) => <a className="underline hover:no-underline" {...props}>{children}</a>,
+                                ul: ({children, ...props}) => <ul className="list-disc pl-4 my-2" {...props}>{children}</ul>,
+                                ol: ({children, ...props}) => <ol className="list-decimal pl-4 my-2" {...props}>{children}</ol>,
+                                li: ({children, ...props}) => <li className="my-0.5" {...props}>{children}</li>,
+                                h1: ({children, ...props}) => <h1 className="text-lg md:text-xl font-bold mt-4 mb-2 first:mt-0" {...props}>{children}</h1>,
+                                h2: ({children, ...props}) => <h2 className="text-base md:text-lg font-bold mt-3 mb-2 first:mt-0" {...props}>{children}</h2>,
+                                h3: ({children, ...props}) => <h3 className="text-sm md:text-base font-bold mt-3 mb-1 first:mt-0" {...props}>{children}</h3>,
+                                code: ({children, className, ...props}) => {
+                                  const isInline = !className;
+                                  return isInline ? (
+                                    <code className="bg-gray-200/50 px-1.5 py-0.5 rounded text-xs md:text-sm" {...props}>{children}</code>
+                                  ) : (
+                                    <code className="block bg-gray-200/50 p-2 md:p-3 rounded-lg overflow-x-auto text-sm my-2" {...props}>{children}</code>
+                                  );
+                                }
+                              }}
+                            >
+                              {message.content + (message.isStreaming ? '▋' : '')}
+                            </ReactMarkdown>
+                          </div>
+                        )}
+                        {!message.isStreaming && message.type === 'ai' && (
                           <Button 
                             variant="secondary"
                             onClick={() => copyToClipboard(message.content)}
-                            className="opacity-0 group-hover:opacity-100 transition-all duration-200 hover:bg-gray-100"
+                            className="absolute -right-12 top-0 opacity-0 group-hover:opacity-100 transition-all duration-200 p-1"
                           >
                             <Copy className="h-4 w-4" />
                           </Button>
@@ -421,14 +466,14 @@ Answer (in markdown format):`;
               </div>
 
               {/* Input Area */}
-              <div className="border-t bg-white p-6">
+              <div className="border-t bg-white p-4 md:p-6">
                 <div className="max-w-3xl mx-auto">
                   <PlaceholdersAndVanishInput
                     placeholders={placeholders}
                     onChange={(e) => setQuery(e.target.value)}
                     onSubmit={handleSubmit}
                   />
-                  <p className="text-xs text-center mt-3 text-gray-500">
+                  <p className="text-xs text-center mt-2 md:mt-3 text-gray-500">
                     WebsiteGPT can make mistakes. Consider checking important information.
                   </p>
                 </div>
