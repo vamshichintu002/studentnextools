@@ -573,7 +573,7 @@ Start with a level 1 heading for the section name:
     <div className="max-w-4xl mx-auto px-4 py-8">
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-3xl font-bold mb-2">Project DOC Maker</h1>
+          <h1 className="text-3xl font-bold mb-2">Project DOC Writer</h1>
           <p className="text-gray-600">Create professional documentation for your project</p>
         </div>
         <Button

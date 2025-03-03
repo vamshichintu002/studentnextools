@@ -591,8 +591,8 @@ Format your response with clear headings, bullet points, and a professional tone
       />
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-3xl font-bold mb-2">LinkedIn Resume Analyzer</h1>
-          <p className="text-gray-600">Get professional insights and improvement suggestions for your LinkedIn resume</p>
+          <h1 className="text-3xl font-bold mb-2">LinkedIn Profile Analyzer</h1>
+          <p className="text-gray-600">Get professional insights and improvement suggestions for your LinkedIn Profile</p>
         </div>
       </div>
 
@@ -639,7 +639,7 @@ Format your response with clear headings, bullet points, and a professional tone
               ) : (
                 <>
                   <FileText className="w-4 h-4" />
-                  <span>Analyze Resume</span>
+                  <span>Analyze Profile</span>
                 </>
               )}
             </Button>
